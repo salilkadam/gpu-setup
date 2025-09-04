@@ -102,6 +102,34 @@ services:
       timeout: 10s
       retries: 3
 
+  # Intelligent Model Routing System
+  routing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.routing
+    container_name: ai-routing-api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"  # Routing API port
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+      - VLLM_BASE_URL=http://vllm-inference-server:8000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - /opt/ai-models:/opt/ai-models:ro
+      - ./src/config:/app/src/config:ro
+      - ./logs:/app/logs
+    depends_on:
+      - vllm-inference-server
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   # Python Testing Service (Updated for vLLM)
   python-testing:
     image: python:3.10-slim
@@ -110,6 +138,7 @@ services:
     environment:
       - MODELS_DIR=/opt/ai-models
       - VLLM_URL=http://vllm-inference-server:8000
+      - ROUTING_URL=http://routing-api:8001
     volumes:
       # Mount centralized model storage
       - /opt/ai-models:/opt/ai-models:ro
@@ -118,6 +147,7 @@ services:
     command: ["python", "-c", "print('vLLM testing service ready')"]
     depends_on:
       - vllm-inference-server
+      - routing-api
 
 volumes:
   redis_data:
