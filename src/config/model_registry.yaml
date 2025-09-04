@@ -1,0 +1,304 @@
+# Model Registry Configuration
+# Defines available models, their capabilities, and routing preferences
+
+models:
+  # 1. TALKING HEAD AVATARS & LIP SYNC
+  avatar:
+    primary:
+      model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
+      backend: "vllm"
+      memory_required: "7GB"
+      performance_score: 90
+      capabilities:
+        - "multimodal"
+        - "vision"
+        - "text_generation"
+      supported_languages: ["english", "hindi", "tamil", "telugu"]
+      load_time: "2.3s"
+      inference_speed: "excellent"
+    
+    fallback:
+      model_id: "microsoft/phi-2"
+      backend: "vllm"
+      memory_required: "5GB"
+      performance_score: 75
+      capabilities:
+        - "text_generation"
+      supported_languages: ["english"]
+      load_time: "2.1s"
+      inference_speed: "excellent"
+    
+    custom:
+      model_id: "external_vision_processor"
+      backend: "custom"
+      memory_required: "2GB"
+      performance_score: 60
+      capabilities:
+        - "vision_processing"
+        - "face_detection"
+        - "lip_sync"
+      supported_languages: ["english"]
+      load_time: "1.0s"
+      inference_speed: "good"
+
+  # 2. MULTILINGUAL STT (Indian Languages)
+  stt:
+    primary:
+      model_id: "Qwen/Qwen2-Audio-7B"
+      backend: "vllm"
+      memory_required: "7GB"
+      performance_score: 88
+      capabilities:
+        - "audio_processing"
+        - "speech_to_text"
+        - "multilingual"
+      supported_languages: ["hindi", "english", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "2.3s"
+      inference_speed: "excellent"
+    
+    fallback:
+      model_id: "openai/whisper-large-v3"
+      backend: "transformers"
+      memory_required: "10GB"
+      performance_score: 85
+      capabilities:
+        - "audio_processing"
+        - "speech_to_text"
+        - "multilingual"
+      supported_languages: ["hindi", "english", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "3.0s"
+      inference_speed: "excellent"
+    
+    custom:
+      model_id: "whisper_streaming"
+      backend: "custom"
+      memory_required: "5GB"
+      performance_score: 70
+      capabilities:
+        - "streaming_audio"
+        - "real_time_stt"
+      supported_languages: ["hindi", "english"]
+      load_time: "1.5s"
+      inference_speed: "good"
+
+  # 3. MULTILINGUAL TTS (Indian Languages)
+  tts:
+    primary:
+      model_id: "Qwen/Qwen2-Audio-7B"
+      backend: "vllm"
+      memory_required: "7GB"
+      performance_score: 88
+      capabilities:
+        - "audio_processing"
+        - "text_to_speech"
+        - "multilingual"
+        - "voice_cloning"
+      supported_languages: ["hindi", "english", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "2.3s"
+      inference_speed: "excellent"
+    
+    fallback:
+      model_id: "suno/bark"
+      backend: "transformers"
+      memory_required: "12GB"
+      performance_score: 82
+      capabilities:
+        - "text_to_speech"
+        - "multilingual"
+        - "emotion_control"
+      supported_languages: ["hindi", "english", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "4.0s"
+      inference_speed: "good"
+    
+    custom:
+      model_id: "coqui_tts"
+      backend: "custom"
+      memory_required: "6GB"
+      performance_score: 75
+      capabilities:
+        - "text_to_speech"
+        - "voice_cloning"
+        - "emotion_control"
+      supported_languages: ["hindi", "english", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "2.0s"
+      inference_speed: "good"
+
+  # 4. CONTENT GENERATION & EXECUTING AGENTS
+  agent:
+    primary:
+      model_id: "Qwen/Qwen2.5-7B-Instruct"
+      backend: "vllm"
+      memory_required: "15GB"
+      performance_score: 95
+      capabilities:
+        - "text_generation"
+        - "code_generation"
+        - "reasoning"
+        - "multilingual"
+        - "instruction_following"
+      supported_languages: ["english", "hindi", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "2.3s"
+      inference_speed: "excellent"
+    
+    fallback:
+      model_id: "microsoft/phi-2"
+      backend: "vllm"
+      memory_required: "5GB"
+      performance_score: 78
+      capabilities:
+        - "text_generation"
+        - "code_generation"
+        - "reasoning"
+      supported_languages: ["english"]
+      load_time: "2.1s"
+      inference_speed: "excellent"
+    
+    coding:
+      model_id: "Qwen/Qwen2.5-Coder-7B-Instruct"
+      backend: "vllm"
+      memory_required: "15GB"
+      performance_score: 92
+      capabilities:
+        - "code_generation"
+        - "code_analysis"
+        - "debugging"
+        - "code_explanation"
+      supported_languages: ["english"]
+      load_time: "2.3s"
+      inference_speed: "excellent"
+
+  # 5. MULTI-MODAL TEMPORAL AGENTIC RAG
+  multimodal:
+    primary:
+      model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
+      backend: "vllm"
+      memory_required: "7GB"
+      performance_score: 90
+      capabilities:
+        - "multimodal"
+        - "vision"
+        - "text_generation"
+        - "temporal_understanding"
+        - "rag"
+      supported_languages: ["english", "hindi", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "2.3s"
+      inference_speed: "excellent"
+    
+    fallback:
+      model_id: "microsoft/phi-2"
+      backend: "vllm"
+      memory_required: "5GB"
+      performance_score: 75
+      capabilities:
+        - "text_generation"
+        - "rag"
+      supported_languages: ["english"]
+      load_time: "2.1s"
+      inference_speed: "excellent"
+    
+    custom:
+      model_id: "external_rag_processor"
+      backend: "custom"
+      memory_required: "3GB"
+      performance_score: 65
+      capabilities:
+        - "rag"
+        - "vector_search"
+        - "document_processing"
+      supported_languages: ["english"]
+      load_time: "1.0s"
+      inference_speed: "good"
+
+  # 6. VIDEO-TO-TEXT UNDERSTANDING
+  video:
+    primary:
+      model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
+      backend: "vllm"
+      memory_required: "7GB"
+      performance_score: 90
+      capabilities:
+        - "multimodal"
+        - "video_understanding"
+        - "temporal_analysis"
+        - "text_generation"
+      supported_languages: ["english", "hindi", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
+      load_time: "2.3s"
+      inference_speed: "excellent"
+    
+    fallback:
+      model_id: "microsoft/phi-2"
+      backend: "vllm"
+      memory_required: "5GB"
+      performance_score: 75
+      capabilities:
+        - "text_generation"
+        - "video_metadata_processing"
+      supported_languages: ["english"]
+      load_time: "2.1s"
+      inference_speed: "excellent"
+    
+    custom:
+      model_id: "external_video_processor"
+      backend: "custom"
+      memory_required: "4GB"
+      performance_score: 70
+      capabilities:
+        - "video_processing"
+        - "frame_extraction"
+        - "motion_analysis"
+      supported_languages: ["english"]
+      load_time: "1.5s"
+      inference_speed: "good"
+
+# Backend configurations
+backends:
+  vllm:
+    type: "vllm"
+    base_url: "http://localhost:8000"
+    timeout: 30
+    max_retries: 3
+    health_check_interval: 10
+    supported_formats: ["text", "json"]
+    
+  transformers:
+    type: "transformers"
+    device: "cuda"
+    torch_dtype: "float16"
+    max_memory: "20GB"
+    supported_formats: ["text", "audio", "image"]
+    
+  custom:
+    type: "custom"
+    timeout: 60
+    max_retries: 2
+    health_check_interval: 15
+    supported_formats: ["text", "audio", "image", "video"]
+
+# Routing preferences
+routing:
+  default_confidence_threshold: 0.7
+  fallback_confidence_threshold: 0.3
+  max_concurrent_models: 3
+  model_switch_timeout: 10
+  memory_threshold: 0.8
+  performance_weight: 0.4
+  availability_weight: 0.3
+  resource_weight: 0.3
+  
+# Performance benchmarks
+benchmarks:
+  text_generation:
+    qwen2_5_7b_instruct: 95
+    phi_2: 78
+    mistral_7b_instruct: 85
+    gemma_7b_it: 82
+    
+  multimodal:
+    qwen2_5_vl_7b_instruct: 90
+    llava_1_5_13b: 75
+    instructblip_7b: 70
+    
+  audio_processing:
+    qwen2_audio_7b: 88
+    whisper_large_v3: 85
+    whisperlive: 70

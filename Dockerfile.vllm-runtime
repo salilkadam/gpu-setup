@@ -1,0 +1,49 @@
+# vLLM Runtime Environment for Blackwell GPUs
+# This is the production runtime image
+
+FROM nvidia/cuda:12.8-runtime-ubuntu24.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symbolic links for python
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python
+
+# Create app directory
+WORKDIR /app
+
+# Copy compiled vLLM from build environment
+# This will be populated during the build process
+COPY --from=vllm-builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
+COPY --from=vllm-builder /usr/local/bin /usr/local/bin
+COPY --from=vllm-builder /usr/local/lib /usr/local/lib
+
+# Set Python path
+ENV PYTHONPATH=/usr/local/lib/python3.11/dist-packages
+ENV PATH=/usr/local/bin:${PATH}
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+
+# Create model directory
+RUN mkdir -p /app/models
+
+# Expose ports
+EXPOSE 8000 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python3 -c "import vllm; print('vLLM is healthy')" || exit 1
+
+# Default command - vLLM OpenAI-compatible API server
+CMD ["python3", "-m", "vllm.entrypoints.openai.api_server", "--host", "0.0.0.0", "--port", "8000"]
