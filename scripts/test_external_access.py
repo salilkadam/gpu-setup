@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional
 class ExternalAccessTester:
     """Test external access to AI infrastructure endpoints."""
     
-    def __init__(self, base_domain: str = "yourdomain.com", use_https: bool = True):
+    def __init__(self, base_domain: str = "bionicaisolutions.com", use_https: bool = True):
         self.base_domain = base_domain
         self.protocol = "https" if use_https else "http"
         self.test_results = {}
@@ -498,7 +498,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Test external access to AI infrastructure')
-    parser.add_argument('--domain', default='yourdomain.com', help='Base domain for testing')
+    parser.add_argument('--domain', default='bionicaisolutions.com', help='Base domain for testing')
     parser.add_argument('--http', action='store_true', help='Use HTTP instead of HTTPS')
     parser.add_argument('--internal-only', action='store_true', help='Test internal endpoints only')
     

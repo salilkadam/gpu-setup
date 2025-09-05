@@ -5,14 +5,14 @@ metadata:
   namespace: ai-infrastructure
 data:
   # External domain configuration
-  EXTERNAL_DOMAIN: "yourdomain.com"
+  EXTERNAL_DOMAIN: "bionicaisolutions.com"
   INTERNAL_DOMAIN: "internal"
   
   # API endpoints
-  ROUTING_API_URL: "https://ai-api.yourdomain.com"
-  STT_API_URL: "https://ai-stt.yourdomain.com"
-  TTS_API_URL: "https://ai-tts.yourdomain.com"
-  VLLM_API_URL: "https://ai-vllm.yourdomain.com"
+  ROUTING_API_URL: "https://ai-api.bionicaisolutions.com"
+  STT_API_URL: "https://ai-stt.bionicaisolutions.com"
+  TTS_API_URL: "https://ai-tts.bionicaisolutions.com"
+  VLLM_API_URL: "https://ai-vllm.bionicaisolutions.com"
   
   # Internal endpoints
   ROUTING_API_INTERNAL: "http://ai-routing-api:8001"

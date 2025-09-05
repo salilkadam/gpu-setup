@@ -19,14 +19,14 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - ai-api.yourdomain.com
-    - ai-stt.yourdomain.com
-    - ai-tts.yourdomain.com
-    - ai-vllm.yourdomain.com
+    - ai-api.bionicaisolutions.com
+    - ai-stt.bionicaisolutions.com
+    - ai-tts.bionicaisolutions.com
+    - ai-vllm.bionicaisolutions.com
     secretName: ai-infrastructure-tls
   rules:
   # Main AI API (Routing Service)
-  - host: ai-api.yourdomain.com
+  - host: ai-api.bionicaisolutions.com
     http:
       paths:
       - path: /
@@ -37,7 +37,7 @@ spec:
             port:
               number: 8001
   # STT Service
-  - host: ai-stt.yourdomain.com
+  - host: ai-stt.bionicaisolutions.com
     http:
       paths:
       - path: /
@@ -48,7 +48,7 @@ spec:
             port:
               number: 8002
   # TTS Service
-  - host: ai-tts.yourdomain.com
+  - host: ai-tts.bionicaisolutions.com
     http:
       paths:
       - path: /
@@ -59,7 +59,7 @@ spec:
             port:
               number: 8003
   # Direct vLLM Service
-  - host: ai-vllm.yourdomain.com
+  - host: ai-vllm.bionicaisolutions.com
     http:
       paths:
       - path: /
@@ -91,10 +91,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - ai.yourdomain.com
+    - ai.bionicaisolutions.com
     secretName: ai-infrastructure-single-tls
   rules:
-  - host: ai.yourdomain.com
+  - host: ai.bionicaisolutions.com
     http:
       paths:
       # Main routing API

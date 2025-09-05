@@ -10,10 +10,10 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-  - ai-api.yourdomain.com
-  - ai-stt.yourdomain.com
-  - ai-tts.yourdomain.com
-  - ai-vllm.yourdomain.com
+  - ai-api.bionicaisolutions.com
+  - ai-stt.bionicaisolutions.com
+  - ai-tts.bionicaisolutions.com
+  - ai-vllm.bionicaisolutions.com
 ---
 # Certificate for single domain
 apiVersion: cert-manager.io/v1
@@ -27,7 +27,7 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-  - ai.yourdomain.com
+  - ai.bionicaisolutions.com
 ---
 # ClusterIssuer for Let's Encrypt (if not already exists)
 apiVersion: cert-manager.io/v1
@@ -37,7 +37,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: your-email@yourdomain.com  # Replace with your email
+    email: admin@bionicaisolutions.com  # Replace with your email
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
@@ -53,7 +53,7 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: your-email@yourdomain.com  # Replace with your email
+    email: admin@bionicaisolutions.com  # Replace with your email
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:

@@ -47,28 +47,28 @@ Add these DNS records to your DNS provider:
 
 ```bash
 # A Records (replace YOUR_CLUSTER_IP with your actual cluster IP)
-ai-api.yourdomain.com     A    YOUR_CLUSTER_IP
-ai-stt.yourdomain.com     A    YOUR_CLUSTER_IP
-ai-tts.yourdomain.com     A    YOUR_CLUSTER_IP
-ai-vllm.yourdomain.com    A    YOUR_CLUSTER_IP
-ai.yourdomain.com         A    YOUR_CLUSTER_IP
+ai-api.bionicaisolutions.com     A    YOUR_CLUSTER_IP
+ai-stt.bionicaisolutions.com     A    YOUR_CLUSTER_IP
+ai-tts.bionicaisolutions.com     A    YOUR_CLUSTER_IP
+ai-vllm.bionicaisolutions.com    A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com         A    YOUR_CLUSTER_IP
 
 # CNAME Records (if using load balancer)
-ai-api.yourdomain.com     CNAME    your-loadbalancer.yourdomain.com
-ai-stt.yourdomain.com     CNAME    your-loadbalancer.yourdomain.com
-ai-tts.yourdomain.com     CNAME    your-loadbalancer.yourdomain.com
-ai-vllm.yourdomain.com    CNAME    your-loadbalancer.yourdomain.com
-ai.yourdomain.com         CNAME    your-loadbalancer.yourdomain.com
+ai-api.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
+ai-stt.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
+ai-tts.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
+ai-vllm.bionicaisolutions.com    CNAME    your-loadbalancer.bionicaisolutions.com
+ai.bionicaisolutions.com         CNAME    your-loadbalancer.bionicaisolutions.com
 ```
 
 ### **3. Test External Access**
 
 ```bash
 # Test from external machine
-python3 scripts/test_external_access.py --domain yourdomain.com
+python3 scripts/test_external_access.py --domain bionicaisolutions.com
 
 # Test with HTTP (for development)
-python3 scripts/test_external_access.py --domain yourdomain.com --http
+python3 scripts/test_external_access.py --domain bionicaisolutions.com --http
 ```
 
 ## 🌐 **Access Methods**
@@ -76,16 +76,16 @@ python3 scripts/test_external_access.py --domain yourdomain.com --http
 ### **1. External Ingress (Production)**
 
 **Multiple Domains:**
-- Main API: `https://ai-api.yourdomain.com`
-- STT Service: `https://ai-stt.yourdomain.com`
-- TTS Service: `https://ai-tts.yourdomain.com`
-- vLLM Service: `https://ai-vllm.yourdomain.com`
+- Main API: `https://ai-api.bionicaisolutions.com`
+- STT Service: `https://ai-stt.bionicaisolutions.com`
+- TTS Service: `https://ai-tts.bionicaisolutions.com`
+- vLLM Service: `https://ai-vllm.bionicaisolutions.com`
 
 **Single Domain with Paths:**
-- Main API: `https://ai.yourdomain.com/api`
-- STT Service: `https://ai.yourdomain.com/stt`
-- TTS Service: `https://ai.yourdomain.com/tts`
-- vLLM Service: `https://ai.yourdomain.com/vllm`
+- Main API: `https://ai.bionicaisolutions.com/api`
+- STT Service: `https://ai.bionicaisolutions.com/stt`
+- TTS Service: `https://ai.bionicaisolutions.com/tts`
+- vLLM Service: `https://ai.bionicaisolutions.com/vllm`
 
 ### **2. Internal Ingress (Intranet)**
 
@@ -122,16 +122,16 @@ curl http://NODE_IP:30000/health  # vLLM Service
 
 ### **1. Update Domain Configuration**
 
-Edit the following files to replace `yourdomain.com` with your actual domain:
+Edit the following files to replace `bionicaisolutions.com` with your actual domain:
 
 ```bash
 # Update ingress configurations
-sed -i 's/yourdomain.com/yourdomain.com/g' k8s/ingress-external.yaml
-sed -i 's/yourdomain.com/yourdomain.com/g' k8s/certificate.yaml
-sed -i 's/yourdomain.com/yourdomain.com/g' k8s/configmap.yaml
+sed -i 's/bionicaisolutions.com/bionicaisolutions.com/g' k8s/ingress-external.yaml
+sed -i 's/bionicaisolutions.com/bionicaisolutions.com/g' k8s/certificate.yaml
+sed -i 's/bionicaisolutions.com/bionicaisolutions.com/g' k8s/configmap.yaml
 
 # Update email for certificates
-sed -i 's/your-email@yourdomain.com/your-email@yourdomain.com/g' k8s/certificate.yaml
+sed -i 's/your-email@bionicaisolutions.com/your-email@bionicaisolutions.com/g' k8s/certificate.yaml
 ```
 
 ### **2. Configure Internal DNS**
@@ -168,36 +168,36 @@ sudo ufw allow from 192.168.0.0/16
 
 ```bash
 # Test DNS resolution
-nslookup ai-api.yourdomain.com
-dig ai-api.yourdomain.com
+nslookup ai-api.bionicaisolutions.com
+dig ai-api.bionicaisolutions.com
 
 # Test HTTP connectivity
-curl -I https://ai-api.yourdomain.com/health
-curl -I https://ai-stt.yourdomain.com/health
-curl -I https://ai-tts.yourdomain.com/health
-curl -I https://ai-vllm.yourdomain.com/health
+curl -I https://ai-api.bionicaisolutions.com/health
+curl -I https://ai-stt.bionicaisolutions.com/health
+curl -I https://ai-tts.bionicaisolutions.com/health
+curl -I https://ai-vllm.bionicaisolutions.com/health
 ```
 
 ### **2. API Functionality Test**
 
 ```bash
 # Test main routing API
-curl -X POST https://ai-api.yourdomain.com/route \
+curl -X POST https://ai-api.bionicaisolutions.com/route \
   -H "Content-Type: application/json" \
   -d '{"query": "Hello, world!", "modality": "text"}'
 
 # Test STT service
-curl -X POST https://ai-stt.yourdomain.com/transcribe \
+curl -X POST https://ai-stt.bionicaisolutions.com/transcribe \
   -F "file=@audio.wav" \
   -F "language=hi"
 
 # Test TTS service
-curl -X POST https://ai-tts.yourdomain.com/synthesize \
+curl -X POST https://ai-tts.bionicaisolutions.com/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello", "language": "hi", "gender": "female"}'
 
 # Test vLLM service
-curl -X POST https://ai-vllm.yourdomain.com/v1/completions \
+curl -X POST https://ai-vllm.bionicaisolutions.com/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "MiniCPM-V-4", "prompt": "Hello", "max_tokens": 10}'
 ```
@@ -206,13 +206,13 @@ curl -X POST https://ai-vllm.yourdomain.com/v1/completions \
 
 ```bash
 # Run comprehensive external access test
-python3 scripts/test_external_access.py --domain yourdomain.com
+python3 scripts/test_external_access.py --domain bionicaisolutions.com
 
 # Test with HTTP (for development)
-python3 scripts/test_external_access.py --domain yourdomain.com --http
+python3 scripts/test_external_access.py --domain bionicaisolutions.com --http
 
 # Test internal endpoints only
-python3 scripts/test_external_access.py --domain yourdomain.com --internal-only
+python3 scripts/test_external_access.py --domain bionicaisolutions.com --internal-only
 ```
 
 ## 🔒 **Security Configuration**
@@ -233,10 +233,10 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-  - ai-api.yourdomain.com
-  - ai-stt.yourdomain.com
-  - ai-tts.yourdomain.com
-  - ai-vllm.yourdomain.com
+  - ai-api.bionicaisolutions.com
+  - ai-stt.bionicaisolutions.com
+  - ai-tts.bionicaisolutions.com
+  - ai-vllm.bionicaisolutions.com
 ```
 
 ### **2. Network Policies**
@@ -317,13 +317,13 @@ kubectl logs -f deployment/ai-vllm-service -n ai-infrastructure
 
 ```bash
 # Test health endpoints
-curl https://ai-api.yourdomain.com/health
-curl https://ai-stt.yourdomain.com/health
-curl https://ai-tts.yourdomain.com/health
-curl https://ai-vllm.yourdomain.com/health
+curl https://ai-api.bionicaisolutions.com/health
+curl https://ai-stt.bionicaisolutions.com/health
+curl https://ai-tts.bionicaisolutions.com/health
+curl https://ai-vllm.bionicaisolutions.com/health
 
 # Test performance
-curl https://ai-api.yourdomain.com/stats
+curl https://ai-api.bionicaisolutions.com/stats
 ```
 
 ## 🛠️ **Troubleshooting**
@@ -332,15 +332,15 @@ curl https://ai-api.yourdomain.com/stats
 
 ```bash
 # Check DNS resolution
-nslookup ai-api.yourdomain.com
-dig ai-api.yourdomain.com
+nslookup ai-api.bionicaisolutions.com
+dig ai-api.bionicaisolutions.com
 
 # Check DNS propagation
-dig @8.8.8.8 ai-api.yourdomain.com
-dig @1.1.1.1 ai-api.yourdomain.com
+dig @8.8.8.8 ai-api.bionicaisolutions.com
+dig @1.1.1.1 ai-api.bionicaisolutions.com
 
 # Test from different locations
-curl -I https://ai-api.yourdomain.com/health
+curl -I https://ai-api.bionicaisolutions.com/health
 ```
 
 ### **2. SSL Certificate Issues**
@@ -438,7 +438,7 @@ kubectl apply -f k8s/certificate.yaml
 import requests
 
 # External access
-BASE_URL = "https://ai-api.yourdomain.com"
+BASE_URL = "https://ai-api.bionicaisolutions.com"
 
 def query_ai(text, modality="text"):
     response = requests.post(f"{BASE_URL}/route", json={
@@ -456,7 +456,7 @@ print(result["result"])
 
 ```javascript
 // External access
-const BASE_URL = 'https://ai-api.yourdomain.com';
+const BASE_URL = 'https://ai-api.bionicaisolutions.com';
 
 async function queryAI(text, modality = 'text') {
     const response = await fetch(`${BASE_URL}/route`, {
@@ -476,15 +476,15 @@ console.log(result.result);
 
 ```bash
 # External access examples
-curl -X POST https://ai-api.yourdomain.com/route \
+curl -X POST https://ai-api.bionicaisolutions.com/route \
   -H "Content-Type: application/json" \
   -d '{"query": "Hello, world!", "modality": "text"}'
 
-curl -X POST https://ai-stt.yourdomain.com/transcribe \
+curl -X POST https://ai-stt.bionicaisolutions.com/transcribe \
   -F "file=@audio.wav" \
   -F "language=hi"
 
-curl -X POST https://ai-tts.yourdomain.com/synthesize \
+curl -X POST https://ai-tts.bionicaisolutions.com/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello", "language": "hi", "gender": "female"}'
 ```
