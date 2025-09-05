@@ -1,0 +1,60 @@
+# DNS Configuration for AI Infrastructure
+# This file contains DNS configuration examples for different scenarios
+
+---
+# Example DNS records for external access
+# Add these to your DNS provider (Cloudflare, Route53, etc.)
+
+# A Records for external domains
+# ai-api.yourdomain.com     A    YOUR_CLUSTER_IP
+# ai-stt.yourdomain.com     A    YOUR_CLUSTER_IP
+# ai-tts.yourdomain.com     A    YOUR_CLUSTER_IP
+# ai-vllm.yourdomain.com    A    YOUR_CLUSTER_IP
+# ai.yourdomain.com         A    YOUR_CLUSTER_IP
+
+# CNAME Records (if using load balancer)
+# ai-api.yourdomain.com     CNAME    your-loadbalancer.yourdomain.com
+# ai-stt.yourdomain.com     CNAME    your-loadbalancer.yourdomain.com
+# ai-tts.yourdomain.com     CNAME    your-loadbalancer.yourdomain.com
+# ai-vllm.yourdomain.com    CNAME    your-loadbalancer.yourdomain.com
+# ai.yourdomain.com         CNAME    your-loadbalancer.yourdomain.com
+
+---
+# Example /etc/hosts entries for local testing
+# Add these to your /etc/hosts file for local testing
+
+# 127.0.0.1    ai-api.local
+# 127.0.0.1    ai-stt.local
+# 127.0.0.1    ai-tts.local
+# 127.0.0.1    ai-vllm.local
+# 127.0.0.1    ai.local
+
+---
+# Example CoreDNS configuration for internal cluster DNS
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  ai.server: |
+    ai.internal {
+        forward . 8.8.8.8 8.8.4.4
+        cache
+    }
+    ai-api.internal {
+        forward . 8.8.8.8 8.8.4.4
+        cache
+    }
+    ai-stt.internal {
+        forward . 8.8.8.8 8.8.4.4
+        cache
+    }
+    ai-tts.internal {
+        forward . 8.8.8.8 8.8.4.4
+        cache
+    }
+    ai-vllm.internal {
+        forward . 8.8.8.8 8.8.4.4
+        cache
+    }
