@@ -4,21 +4,14 @@ metadata:
   name: ai-infrastructure-config
   namespace: ai-infrastructure
 data:
-  # External domain configuration
-  EXTERNAL_DOMAIN: "bionicaisolutions.com"
+  # Internal domain configuration
   INTERNAL_DOMAIN: "internal"
   
-  # API endpoints
-  ROUTING_API_URL: "https://ai.bionicaisolutions.com/api"
-  STT_API_URL: "https://ai.bionicaisolutions.com/stt"
-  TTS_API_URL: "https://ai.bionicaisolutions.com/tts"
-  VLLM_API_URL: "https://ai.bionicaisolutions.com/vllm"
-  
-  # Internal endpoints
-  ROUTING_API_INTERNAL: "http://ai-routing-api:8001"
-  STT_API_INTERNAL: "http://ai-stt-service:8002"
-  TTS_API_INTERNAL: "http://ai-tts-service:8003"
-  VLLM_API_INTERNAL: "http://ai-vllm-service:8000"
+  # Internal service endpoints
+  ROUTING_API_URL: "http://ai-routing-api:8001"
+  STT_API_URL: "http://ai-stt-service:8002"
+  TTS_API_URL: "http://ai-tts-service:8003"
+  VLLM_API_URL: "http://ai-vllm-service:8000"
   
   # Redis configuration
   REDIS_URL: "redis://ai-redis:6379"

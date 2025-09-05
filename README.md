@@ -15,6 +15,8 @@ This project provides a complete solution for deploying vLLM (Very Large Languag
 - **🔧 Docker Integration**: Complete containerized setup
 - **📈 Monitoring**: Prometheus + Grafana monitoring stack
 - **🧪 Comprehensive Testing**: Full test suite for all use cases
+- **🖼️ Multimodal Capabilities**: Image and video processing with MiniCPM-V-4
+- **🌐 Internal DNS Routing**: Kubernetes cluster access to Docker AI services
 
 ## 🏗️ Architecture
 
@@ -41,13 +43,16 @@ This project provides a complete solution for deploying vLLM (Very Large Languag
 
 ## 📦 Models Included
 
-### **✅ vLLM Compatible Models**
-- **Phi-2** (5.2GB) - Microsoft's efficient language model
-- **Qwen2.5-7B-Instruct** (15GB) - Alibaba's high-performance model
+### **✅ Currently Deployed**
+- **MiniCPM-V-4** (7GB) - Multimodal vision-language model with image/video capabilities
+- **Whisper Large v3** - Speech-to-text for Indian languages
+- **Coqui TTS** - Text-to-speech for Indian languages
 
-### **🔄 Planned Models**
-- **Qwen2.5-VL-7B-Instruct** - Multimodal vision-language model
-- **Qwen2-Audio-7B** - Advanced audio processing model
+### **🔧 Model Capabilities**
+- **Image Processing**: Up to 448x448 pixels with batch processing
+- **Video Understanding**: Frame analysis and temporal understanding
+- **Multimodal Tasks**: Image+text and video+text analysis
+- **Scene Understanding**: Object detection and scene description
 - **Gemma-7B-IT** - Google's instruction-tuned model
 
 ## 🚀 Quick Start
@@ -192,6 +197,62 @@ Access monitoring dashboards:
 3. Make your changes
 4. Add tests
 5. Submit a pull request
+
+## 🖼️ vLLM Multimodal Capabilities
+
+The vLLM endpoint supports advanced multimodal processing with the MiniCPM-V-4 model:
+
+### Image Processing
+- **Image Analysis**: Describe and analyze image content
+- **Object Detection**: Identify objects in images
+- **Scene Understanding**: Understand complex scenes and contexts
+- **Format Support**: JPEG, PNG, and other common formats
+
+### Video Understanding
+- **Frame Analysis**: Process individual video frames
+- **Temporal Analysis**: Understand video sequences over time
+- **Action Recognition**: Identify actions and movements
+- **Content Summarization**: Summarize video content
+
+### API Usage Examples
+
+#### Direct vLLM Endpoint
+```bash
+curl -X POST http://192.168.0.21:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "/app/models/minicpm-v-4",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Describe what you see in this image"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "data:image/jpeg;base64,YOUR_IMAGE_BASE64"
+            }
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+#### Through Routing API
+```bash
+curl -X POST http://192.168.0.21:8001/route \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Analyze this image and describe what you see",
+    "use_case": "multimodal"
+  }'
+```
+
+For detailed information, see [VLLM Multimodal Capabilities Documentation](docs/VLLM-MULTIMODAL-CAPABILITIES.md).
 
 ## 📄 License
 

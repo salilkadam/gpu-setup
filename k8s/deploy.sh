@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AI Infrastructure Kubernetes Deployment Script
-# This script deploys the AI infrastructure to Kubernetes with external access
+# This script deploys the AI infrastructure to Kubernetes for internal cluster access
 
 set -e
 
@@ -56,10 +56,11 @@ print_status "Creating ConfigMap..."
 kubectl apply -f k8s/configmap.yaml
 print_success "ConfigMap created"
 
-# Deploy services
+# Deploy services and endpoints
 print_status "Deploying internal services..."
 kubectl apply -f k8s/services.yaml
-print_success "Internal services deployed"
+kubectl apply -f k8s/endpoints.yaml
+print_success "Internal services and endpoints deployed"
 
 # Deploy network policies
 print_status "Deploying network policies..."
@@ -76,51 +77,19 @@ else
     INGRESS_AVAILABLE=false
 fi
 
-# Deploy ingress if available
+# Deploy internal ingress if available
 if [ "$INGRESS_AVAILABLE" = true ]; then
-    print_status "Deploying ingress configurations..."
-    
-    # Check if cert-manager is available
-    if kubectl get pods -n cert-manager &> /dev/null; then
-        print_success "cert-manager found"
-        print_status "Deploying certificates..."
-        kubectl apply -f k8s/certificate.yaml
-        print_success "Certificates deployed"
-        
-        print_status "Deploying external ingress..."
-        kubectl apply -f k8s/ingress-external.yaml
-        print_success "External ingress deployed"
-    else
-        print_warning "cert-manager not found, deploying without TLS"
-        # Remove TLS sections from ingress
-        sed 's/cert-manager.io\/cluster-issuer.*//' k8s/ingress-external.yaml | \
-        sed '/tls:/,/secretName:/d' | \
-        kubectl apply -f -
-        print_success "External ingress deployed (without TLS)"
-    fi
-    
     print_status "Deploying internal ingress..."
     kubectl apply -f k8s/ingress-internal.yaml
     print_success "Internal ingress deployed"
 else
-    print_warning "Ingress not available, deploying LoadBalancer services..."
-    kubectl apply -f k8s/loadbalancer.yaml
-    print_success "LoadBalancer services deployed"
+    print_warning "Ingress not available - services will be accessible via ClusterIP only"
 fi
 
-# Deploy NodePort services as fallback
-print_status "Deploying NodePort services..."
-kubectl apply -f k8s/nodeport.yaml
-print_success "NodePort services deployed"
-
-# Wait for services to be ready
-print_status "Waiting for services to be ready..."
-kubectl wait --for=condition=ready pod -l app=ai-routing-api -n ai-infrastructure --timeout=300s || true
-kubectl wait --for=condition=ready pod -l app=ai-stt-service -n ai-infrastructure --timeout=300s || true
-kubectl wait --for=condition=ready pod -l app=ai-tts-service -n ai-infrastructure --timeout=300s || true
-kubectl wait --for=condition=ready pod -l app=ai-vllm-service -n ai-infrastructure --timeout=300s || true
-
-print_success "Services are ready"
+# Check service endpoints
+print_status "Checking service endpoints..."
+kubectl get endpoints -n ai-infrastructure
+print_success "Service endpoints verified"
 
 # Display access information
 echo ""
@@ -136,40 +105,28 @@ fi
 
 print_status "Cluster IP: $CLUSTER_IP"
 
+echo ""
+print_success "🏠 INTERNAL CLUSTER ACCESS:"
+echo "  Main API:     http://ai-routing-api:8001"
+echo "  STT Service:  http://ai-stt-service:8002"
+echo "  TTS Service:  http://ai-tts-service:8003"
+echo "  vLLM Service: http://ai-vllm-service:8000"
+echo "  Redis Cache:  redis://ai-redis:6379"
+
 if [ "$INGRESS_AVAILABLE" = true ]; then
     echo ""
-    print_success "🌐 EXTERNAL ACCESS (via Ingress):"
-    echo "  Main API:     https://ai-api.yourdomain.com"
-    echo "  STT Service:  https://ai-stt.yourdomain.com"
-    echo "  TTS Service:  https://ai-tts.yourdomain.com"
-    echo "  vLLM Service: https://ai-vllm.yourdomain.com"
-    echo ""
-    print_success "🏠 INTERNAL ACCESS (via Ingress):"
+    print_success "🌐 INTERNAL INGRESS ACCESS:"
     echo "  Main API:     http://ai-api.internal"
     echo "  STT Service:  http://ai-stt.internal"
     echo "  TTS Service:  http://ai-tts.internal"
     echo "  vLLM Service: http://ai-vllm.internal"
     echo ""
     print_success "🔗 SINGLE DOMAIN ACCESS:"
-    echo "  Main API:     https://ai.yourdomain.com/api"
-    echo "  STT Service:  https://ai.yourdomain.com/stt"
-    echo "  TTS Service:  https://ai.yourdomain.com/tts"
-    echo "  vLLM Service: https://ai.yourdomain.com/vllm"
-else
-    echo ""
-    print_success "🌐 LOADBALANCER ACCESS:"
-    kubectl get svc -n ai-infrastructure -l app=ai-routing-api
-    kubectl get svc -n ai-infrastructure -l app=ai-stt-service
-    kubectl get svc -n ai-infrastructure -l app=ai-tts-service
-    kubectl get svc -n ai-infrastructure -l app=ai-vllm-service
+    echo "  Main API:     http://ai.internal/api"
+    echo "  STT Service:  http://ai.internal/stt"
+    echo "  TTS Service:  http://ai.internal/tts"
+    echo "  vLLM Service: http://ai.internal/vllm"
 fi
-
-echo ""
-print_success "🔌 NODEPORT ACCESS:"
-echo "  Main API:     http://$CLUSTER_IP:30001"
-echo "  STT Service:  http://$CLUSTER_IP:30002"
-echo "  TTS Service:  http://$CLUSTER_IP:30003"
-echo "  vLLM Service: http://$CLUSTER_IP:30000"
 
 echo ""
 print_success "📊 MONITORING:"
@@ -179,11 +136,10 @@ echo "  Check services: kubectl get svc -n ai-infrastructure"
 
 echo ""
 print_warning "⚠️  NEXT STEPS:"
-echo "  1. Update DNS records to point to your cluster IP"
-echo "  2. Replace 'yourdomain.com' with your actual domain"
-echo "  3. Update email in certificate.yaml"
-echo "  4. Configure firewall rules for ports 80, 443, 30000-30003"
-echo "  5. Test the endpoints using the provided URLs"
+echo "  1. Ensure Docker containers are running on host (192.168.0.21)"
+echo "  2. Configure internal DNS for .internal domains (if using ingress)"
+echo "  3. Test the endpoints from within the cluster"
+echo "  4. Monitor service health and logs"
 
 echo ""
 print_success "🎉 AI Infrastructure deployed successfully!"

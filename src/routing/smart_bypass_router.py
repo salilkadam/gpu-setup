@@ -82,22 +82,22 @@ class SmartBypassRouter:
         self.model_endpoints = {
             "agent": {
                 "endpoint": "http://192.168.0.21:8000",
-                "model_id": "MiniCPM-V-4",
+                "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             "multimodal": {
                 "endpoint": "http://192.168.0.21:8000", 
-                "model_id": "MiniCPM-V-4",
+                "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             "avatar": {
                 "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
-                "model_id": "MiniCPM-V-4",
+                "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             "video": {
                 "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
-                "model_id": "MiniCPM-V-4", 
+                "model_id": "/app/models/minicpm-v-4", 
                 "port": 8000
             },
             "stt": {

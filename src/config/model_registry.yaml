@@ -5,7 +5,7 @@ models:
   # 1. TALKING HEAD AVATARS & LIP SYNC
   avatar:
     primary:
-      model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
+      model_id: "/app/models/minicpm-v-4"
       backend: "vllm"
       memory_required: "7GB"
       performance_score: 90
@@ -13,6 +13,7 @@ models:
         - "multimodal"
         - "vision"
         - "text_generation"
+        - "avatar_generation"
       supported_languages: ["english", "hindi", "tamil", "telugu"]
       load_time: "2.3s"
       inference_speed: "excellent"
@@ -44,9 +45,9 @@ models:
   # 2. MULTILINGUAL STT (Indian Languages)
   stt:
     primary:
-      model_id: "Qwen/Qwen2-Audio-7B"
-      backend: "vllm"
-      memory_required: "7GB"
+      model_id: "whisper-large-v3"
+      backend: "transformers"
+      memory_required: "3GB"
       performance_score: 88
       capabilities:
         - "audio_processing"
@@ -126,9 +127,9 @@ models:
   # 4. CONTENT GENERATION & EXECUTING AGENTS
   agent:
     primary:
-      model_id: "Qwen/Qwen2.5-7B-Instruct"
+      model_id: "/app/models/minicpm-v-4"
       backend: "vllm"
-      memory_required: "15GB"
+      memory_required: "7GB"
       performance_score: 95
       capabilities:
         - "text_generation"
@@ -136,6 +137,8 @@ models:
         - "reasoning"
         - "multilingual"
         - "instruction_following"
+        - "multimodal"
+        - "vision"
       supported_languages: ["english", "hindi", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
       load_time: "2.3s"
       inference_speed: "excellent"
@@ -170,7 +173,7 @@ models:
   # 5. MULTI-MODAL TEMPORAL AGENTIC RAG
   multimodal:
     primary:
-      model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
+      model_id: "/app/models/minicpm-v-4"
       backend: "vllm"
       memory_required: "7GB"
       performance_score: 90
@@ -180,6 +183,8 @@ models:
         - "text_generation"
         - "temporal_understanding"
         - "rag"
+        - "image_analysis"
+        - "video_understanding"
       supported_languages: ["english", "hindi", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
       load_time: "2.3s"
       inference_speed: "excellent"
@@ -212,7 +217,7 @@ models:
   # 6. VIDEO-TO-TEXT UNDERSTANDING
   video:
     primary:
-      model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
+      model_id: "/app/models/minicpm-v-4"
       backend: "vllm"
       memory_required: "7GB"
       performance_score: 90
@@ -221,6 +226,8 @@ models:
         - "video_understanding"
         - "temporal_analysis"
         - "text_generation"
+        - "frame_analysis"
+        - "scene_understanding"
       supported_languages: ["english", "hindi", "tamil", "telugu", "bengali", "marathi", "gujarati", "kannada", "malayalam", "punjabi"]
       load_time: "2.3s"
       inference_speed: "excellent"
@@ -254,11 +261,11 @@ models:
 backends:
   vllm:
     type: "vllm"
-    base_url: "http://localhost:8000"
+    base_url: "http://192.168.0.21:8000"
     timeout: 30
     max_retries: 3
     health_check_interval: 10
-    supported_formats: ["text", "json"]
+    supported_formats: ["text", "json", "image", "video"]
     
   transformers:
     type: "transformers"

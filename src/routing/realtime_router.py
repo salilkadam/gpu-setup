@@ -53,22 +53,22 @@ class RealtimeRouter:
         self.model_endpoints = {
             UseCase.AGENT: {
                 "endpoint": "http://192.168.0.21:8000",
-                "model_id": "MiniCPM-V-4",
+                "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             UseCase.MULTIMODAL: {
                 "endpoint": "http://192.168.0.21:8000", 
-                "model_id": "MiniCPM-V-4",
+                "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             UseCase.AVATAR: {
                 "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
-                "model_id": "MiniCPM-V-4",
+                "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             UseCase.VIDEO: {
                 "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
-                "model_id": "MiniCPM-V-4", 
+                "model_id": "/app/models/minicpm-v-4", 
                 "port": 8000
             },
             UseCase.STT: {

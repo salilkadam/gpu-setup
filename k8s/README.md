@@ -1,14 +1,10 @@
 # Kubernetes Deployment for AI Infrastructure
 
-This directory contains Kubernetes configurations to deploy the AI infrastructure with external access capabilities.
+This directory contains Kubernetes configurations for internal cluster access to AI services running in Docker containers.
 
 ## 🎯 **Overview**
 
-The AI infrastructure can be accessed from remote machines through multiple methods:
-- **External Ingress** (recommended for production)
-- **LoadBalancer Services** (cloud providers)
-- **NodePort Services** (direct node access)
-- **Internal DNS** (intranet access)
+The AI infrastructure uses **Internal DNS routing** to connect Kubernetes cluster applications to AI endpoints running in Docker containers on the host (192.168.0.21).
 
 ## 📁 **Files Structure**
 
@@ -16,13 +12,10 @@ The AI infrastructure can be accessed from remote machines through multiple meth
 k8s/
 ├── namespace.yaml           # Kubernetes namespace
 ├── services.yaml           # Internal ClusterIP services
-├── ingress-external.yaml   # External ingress with TLS
+├── endpoints.yaml          # Endpoints pointing to Docker containers
 ├── ingress-internal.yaml   # Internal ingress for intranet
-├── loadbalancer.yaml       # LoadBalancer services
-├── nodeport.yaml          # NodePort services
 ├── configmap.yaml         # Configuration values
 ├── networkpolicy.yaml     # Network security policies
-├── certificate.yaml       # TLS certificates
 ├── dns-config.yaml        # DNS configuration examples
 ├── deploy.sh             # Deployment script
 └── README.md             # This file
@@ -34,8 +27,8 @@ k8s/
 
 - Kubernetes cluster (v1.19+)
 - kubectl configured
-- NGINX Ingress Controller (optional)
-- cert-manager (optional, for TLS)
+- Docker containers running AI services on host (192.168.0.21)
+- NGINX Ingress Controller (for internal ingress)
 
 ### **2. Deploy**
 
@@ -53,35 +46,24 @@ chmod +x k8s/deploy.sh
 # Create namespace
 kubectl apply -f k8s/namespace.yaml
 
-# Deploy services
+# Deploy services and endpoints
 kubectl apply -f k8s/services.yaml
+kubectl apply -f k8s/endpoints.yaml
 
-# Deploy ingress (if available)
-kubectl apply -f k8s/ingress-external.yaml
+# Deploy internal ingress (optional)
 kubectl apply -f k8s/ingress-internal.yaml
-
-# Deploy LoadBalancer services
-kubectl apply -f k8s/loadbalancer.yaml
-
-# Deploy NodePort services
-kubectl apply -f k8s/nodeport.yaml
 ```
 
 ## 🌐 **Access Methods**
 
-### **1. External Ingress (Recommended)**
+### **1. Internal Cluster Access (Primary)**
 
-**External Domains:**
-- Main API: `https://ai.bionicaisolutions.com/api`
-- STT Service: `https://ai.bionicaisolutions.com/stt`
-- TTS Service: `https://ai.bionicaisolutions.com/tts`
-- vLLM Service: `https://ai.bionicaisolutions.com/vllm`
-
-**Single Domain:**
-- Main API: `https://ai.bionicaisolutions.com/api`
-- STT Service: `https://ai.bionicaisolutions.com/stt`
-- TTS Service: `https://ai.bionicaisolutions.com/tts`
-- vLLM Service: `https://ai.bionicaisolutions.com/vllm`
+**Service Names (within cluster):**
+- Main API: `http://ai-routing-api:8001`
+- STT Service: `http://ai-stt-service:8002`
+- TTS Service: `http://ai-tts-service:8003`
+- vLLM Service: `http://ai-vllm-service:8000`
+- Redis Cache: `redis://ai-redis:6379`
 
 ### **2. Internal Ingress (Intranet)**
 
@@ -91,63 +73,28 @@ kubectl apply -f k8s/nodeport.yaml
 - TTS Service: `http://ai-tts.internal`
 - vLLM Service: `http://ai-vllm.internal`
 
-### **3. LoadBalancer Services**
-
-```bash
-# Get LoadBalancer IPs
-kubectl get svc -n ai-infrastructure
-
-# Access via LoadBalancer IPs
-# http://LOADBALANCER_IP:80
-```
-
-### **4. NodePort Services**
-
-```bash
-# Get node IP
-kubectl get nodes -o wide
-
-# Access via NodePort
-# http://NODE_IP:30001  (Main API)
-# http://NODE_IP:30002  (STT Service)
-# http://NODE_IP:30003  (TTS Service)
-# http://NODE_IP:30000  (vLLM Service)
-```
+**Single Internal Domain:**
+- All services: `http://ai.internal/api`, `http://ai.internal/stt`, etc.
 
 ## 🔧 **Configuration**
 
-### **1. Update Domains**
+### **1. Docker Container Setup**
 
-Edit the following files to replace `bionicaisolutions.com` with your actual domain:
+Ensure Docker containers are running on host IP `192.168.0.21`:
+- vLLM Service: Port 8000
+- Routing API: Port 8001  
+- STT Service: Port 8002
+- TTS Service: Port 8003
+- Redis: Port 6379
 
-- `k8s/ingress-external.yaml`
-- `k8s/certificate.yaml`
-- `k8s/configmap.yaml`
-
-### **2. Update Email for Certificates**
-
-Edit `k8s/certificate.yaml` and replace `your-email@bionicaisolutions.com` with your email.
-
-### **3. Configure DNS**
-
-Add DNS records pointing to your cluster:
-
-```bash
-# A Records
-ai.bionicaisolutions.com/api     A    YOUR_CLUSTER_IP
-ai.bionicaisolutions.com/stt     A    YOUR_CLUSTER_IP
-ai.bionicaisolutions.com/tts     A    YOUR_CLUSTER_IP
-ai.bionicaisolutions.com/vllm    A    YOUR_CLUSTER_IP
-ai.bionicaisolutions.com         A    YOUR_CLUSTER_IP
-```
-
-### **4. Internal DNS (Intranet)**
+### **2. Internal DNS (Intranet)**
 
 For intranet access, configure your internal DNS server to resolve:
 - `ai-api.internal`
 - `ai-stt.internal`
 - `ai-tts.internal`
 - `ai-vllm.internal`
+- `ai.internal` (single domain)
 
 ## 🔒 **Security**
 
@@ -158,11 +105,11 @@ Network policies are deployed to restrict traffic:
 - Only allow internal service communication
 - Restrict egress to necessary services
 
-### **2. TLS Certificates**
+### **2. Internal Access Only**
 
-- Automatic TLS certificates via Let's Encrypt
-- HTTPS redirect enabled
-- Secure headers configured
+- Services are accessible only within the cluster
+- No external exposure by default
+- Internal ingress provides controlled intranet access
 
 ### **3. CORS Configuration**
 
@@ -202,20 +149,17 @@ kubectl logs -f deployment/ai-vllm-service -n ai-infrastructure
 ### **3. Test Endpoints**
 
 ```bash
+# Test from within cluster
+kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-routing-api:8001/health
+
 # Test main API
-curl -X POST https://ai.bionicaisolutions.com/api/route \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Hello, world!"}'
+kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-routing-api:8001/health
 
 # Test STT service
-curl -X POST https://ai.bionicaisolutions.com/stt/transcribe \
-  -F "file=@audio.wav" \
-  -F "language=hi"
+kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-stt-service:8002/health
 
 # Test TTS service
-curl -X POST https://ai.bionicaisolutions.com/tts/synthesize \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Hello", "language": "hi", "gender": "female"}'
+kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-tts-service:8003/health
 ```
 
 ## 🛠️ **Troubleshooting**

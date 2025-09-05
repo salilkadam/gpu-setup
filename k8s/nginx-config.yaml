@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-configuration
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+data:
+  # Disable DNS resolution for IP addresses
+  resolver: "off"
+  # Use IP addresses directly without DNS resolution
+  upstream-keepalive-connections: "32"
+  upstream-keepalive-timeout: "60"
+  # Disable DNS caching for IP addresses
+  resolver-valid: "10s"
+  resolver-timeout: "5s"
