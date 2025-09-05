@@ -48,22 +48,22 @@ print_success "Kubernetes cluster is accessible"
 
 # Create namespace
 print_status "Creating namespace..."
-kubectl apply -f namespace.yaml
+kubectl apply -f k8s/namespace.yaml
 print_success "Namespace created"
 
 # Create ConfigMap
 print_status "Creating ConfigMap..."
-kubectl apply -f configmap.yaml
+kubectl apply -f k8s/configmap.yaml
 print_success "ConfigMap created"
 
 # Deploy services
 print_status "Deploying internal services..."
-kubectl apply -f services.yaml
+kubectl apply -f k8s/services.yaml
 print_success "Internal services deployed"
 
 # Deploy network policies
 print_status "Deploying network policies..."
-kubectl apply -f networkpolicy.yaml
+kubectl apply -f k8s/networkpolicy.yaml
 print_success "Network policies deployed"
 
 # Check if ingress controller is available
@@ -84,33 +84,33 @@ if [ "$INGRESS_AVAILABLE" = true ]; then
     if kubectl get pods -n cert-manager &> /dev/null; then
         print_success "cert-manager found"
         print_status "Deploying certificates..."
-        kubectl apply -f certificate.yaml
+        kubectl apply -f k8s/certificate.yaml
         print_success "Certificates deployed"
         
         print_status "Deploying external ingress..."
-        kubectl apply -f ingress-external.yaml
+        kubectl apply -f k8s/ingress-external.yaml
         print_success "External ingress deployed"
     else
         print_warning "cert-manager not found, deploying without TLS"
         # Remove TLS sections from ingress
-        sed 's/cert-manager.io\/cluster-issuer.*//' ingress-external.yaml | \
+        sed 's/cert-manager.io\/cluster-issuer.*//' k8s/ingress-external.yaml | \
         sed '/tls:/,/secretName:/d' | \
         kubectl apply -f -
         print_success "External ingress deployed (without TLS)"
     fi
     
     print_status "Deploying internal ingress..."
-    kubectl apply -f ingress-internal.yaml
+    kubectl apply -f k8s/ingress-internal.yaml
     print_success "Internal ingress deployed"
 else
     print_warning "Ingress not available, deploying LoadBalancer services..."
-    kubectl apply -f loadbalancer.yaml
+    kubectl apply -f k8s/loadbalancer.yaml
     print_success "LoadBalancer services deployed"
 fi
 
 # Deploy NodePort services as fallback
 print_status "Deploying NodePort services..."
-kubectl apply -f nodeport.yaml
+kubectl apply -f k8s/nodeport.yaml
 print_success "NodePort services deployed"
 
 # Wait for services to be ready

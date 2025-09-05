@@ -52,32 +52,32 @@ class RealtimeRouter:
         """Initialize the real-time router."""
         self.model_endpoints = {
             UseCase.AGENT: {
-                "endpoint": "http://localhost:8000",
+                "endpoint": "http://192.168.0.21:8000",
                 "model_id": "MiniCPM-V-4",
                 "port": 8000
             },
             UseCase.MULTIMODAL: {
-                "endpoint": "http://localhost:8000", 
+                "endpoint": "http://192.168.0.21:8000", 
                 "model_id": "MiniCPM-V-4",
                 "port": 8000
             },
             UseCase.AVATAR: {
-                "endpoint": "http://localhost:8000",  # Shared with multimodal
+                "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
                 "model_id": "MiniCPM-V-4",
                 "port": 8000
             },
             UseCase.VIDEO: {
-                "endpoint": "http://localhost:8000",  # Shared with multimodal
+                "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
                 "model_id": "MiniCPM-V-4", 
                 "port": 8000
             },
             UseCase.STT: {
-                "endpoint": "http://localhost:8002",
+                "endpoint": "http://192.168.0.21:8002",
                 "model_id": "whisper-large-v3",
                 "port": 8002
             },
             UseCase.TTS: {
-                "endpoint": "http://localhost:8003",
+                "endpoint": "http://192.168.0.21:8003",
                 "model_id": "coqui-tts",
                 "port": 8003
             }
