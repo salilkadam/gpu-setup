@@ -53,33 +53,33 @@ class RealtimeRouter:
         self.model_endpoints = {
             UseCase.AGENT: {
                 "endpoint": "http://localhost:8000",
-                "model_id": "Qwen/Qwen2.5-7B-Instruct",
+                "model_id": "MiniCPM-V-4",
                 "port": 8000
             },
             UseCase.MULTIMODAL: {
-                "endpoint": "http://localhost:8001", 
-                "model_id": "Qwen/Qwen2.5-VL-7B-Instruct",
-                "port": 8001
+                "endpoint": "http://localhost:8000", 
+                "model_id": "MiniCPM-V-4",
+                "port": 8000
             },
             UseCase.AVATAR: {
-                "endpoint": "http://localhost:8001",  # Shared with multimodal
-                "model_id": "Qwen/Qwen2.5-VL-7B-Instruct",
-                "port": 8001
+                "endpoint": "http://localhost:8000",  # Shared with multimodal
+                "model_id": "MiniCPM-V-4",
+                "port": 8000
             },
             UseCase.VIDEO: {
-                "endpoint": "http://localhost:8001",  # Shared with multimodal
-                "model_id": "Qwen/Qwen2.5-VL-7B-Instruct", 
-                "port": 8001
+                "endpoint": "http://localhost:8000",  # Shared with multimodal
+                "model_id": "MiniCPM-V-4", 
+                "port": 8000
             },
             UseCase.STT: {
                 "endpoint": "http://localhost:8002",
-                "model_id": "Qwen/Qwen2-Audio-7B",
+                "model_id": "whisper-large-v3",
                 "port": 8002
             },
             UseCase.TTS: {
-                "endpoint": "http://localhost:8002",  # Shared with STT
-                "model_id": "Qwen/Qwen2-Audio-7B",
-                "port": 8002
+                "endpoint": "http://localhost:8003",
+                "model_id": "coqui-tts",
+                "port": 8003
             }
         }
         

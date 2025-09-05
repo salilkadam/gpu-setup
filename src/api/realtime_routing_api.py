@@ -38,6 +38,7 @@ class RealtimeQueryResponse(BaseModel):
     result: Optional[str] = None
     use_case: Optional[str] = None
     selected_model: Optional[str] = None
+    endpoint: Optional[str] = None
     confidence: Optional[float] = None
     routing_time: Optional[float] = None
     bypass_used: Optional[bool] = None
@@ -203,6 +204,7 @@ class RealtimeRoutingAPI:
                     result=inference_result,
                     use_case=routing_result.use_case,
                     selected_model=routing_result.model_id,
+                    endpoint=routing_result.endpoint,
                     confidence=routing_result.confidence,
                     routing_time=routing_time,
                     bypass_used=routing_result.bypass_used,
