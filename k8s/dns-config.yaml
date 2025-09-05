@@ -5,28 +5,16 @@
 # Example DNS records for external access
 # Add these to your DNS provider (Cloudflare, Route53, etc.)
 
-# A Records for external domains
-# ai-api.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-# ai-stt.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-# ai-tts.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-# ai-vllm.bionicaisolutions.com    A    YOUR_CLUSTER_IP
+# A Records for external domain
 # ai.bionicaisolutions.com         A    YOUR_CLUSTER_IP
 
 # CNAME Records (if using load balancer)
-# ai-api.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
-# ai-stt.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
-# ai-tts.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
-# ai-vllm.bionicaisolutions.com    CNAME    your-loadbalancer.bionicaisolutions.com
 # ai.bionicaisolutions.com         CNAME    your-loadbalancer.bionicaisolutions.com
 
 ---
 # Example /etc/hosts entries for local testing
 # Add these to your /etc/hosts file for local testing
 
-# 127.0.0.1    ai-api.local
-# 127.0.0.1    ai-stt.local
-# 127.0.0.1    ai-tts.local
-# 127.0.0.1    ai-vllm.local
 # 127.0.0.1    ai.local
 
 ---
@@ -39,22 +27,6 @@ metadata:
 data:
   ai.server: |
     ai.internal {
-        forward . 8.8.8.8 8.8.4.4
-        cache
-    }
-    ai-api.internal {
-        forward . 8.8.8.8 8.8.4.4
-        cache
-    }
-    ai-stt.internal {
-        forward . 8.8.8.8 8.8.4.4
-        cache
-    }
-    ai-tts.internal {
-        forward . 8.8.8.8 8.8.4.4
-        cache
-    }
-    ai-vllm.internal {
         forward . 8.8.8.8 8.8.4.4
         cache
     }

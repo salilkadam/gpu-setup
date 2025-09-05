@@ -1,80 +1,8 @@
+# Single domain with path-based routing
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ai-infrastructure-external
-  namespace: ai-infrastructure
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
-    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-spec:
-  ingressClassName: nginx
-  tls:
-  - hosts:
-    - ai-api.bionicaisolutions.com
-    - ai-stt.bionicaisolutions.com
-    - ai-tts.bionicaisolutions.com
-    - ai-vllm.bionicaisolutions.com
-    secretName: ai-infrastructure-tls
-  rules:
-  # Main AI API (Routing Service)
-  - host: ai-api.bionicaisolutions.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: ai-routing-api
-            port:
-              number: 8001
-  # STT Service
-  - host: ai-stt.bionicaisolutions.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: ai-stt-service
-            port:
-              number: 8002
-  # TTS Service
-  - host: ai-tts.bionicaisolutions.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: ai-tts-service
-            port:
-              number: 8003
-  # Direct vLLM Service
-  - host: ai-vllm.bionicaisolutions.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: ai-vllm-service
-            port:
-              number: 8000
----
-# Alternative: Single domain with path-based routing
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ai-infrastructure-single-domain
   namespace: ai-infrastructure
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
@@ -92,7 +20,7 @@ spec:
   tls:
   - hosts:
     - ai.bionicaisolutions.com
-    secretName: ai-infrastructure-single-tls
+    secretName: ai-infrastructure-tls
   rules:
   - host: ai.bionicaisolutions.com
     http:

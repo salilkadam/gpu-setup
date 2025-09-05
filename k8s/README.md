@@ -72,10 +72,10 @@ kubectl apply -f k8s/nodeport.yaml
 ### **1. External Ingress (Recommended)**
 
 **External Domains:**
-- Main API: `https://ai-api.bionicaisolutions.com`
-- STT Service: `https://ai-stt.bionicaisolutions.com`
-- TTS Service: `https://ai-tts.bionicaisolutions.com`
-- vLLM Service: `https://ai-vllm.bionicaisolutions.com`
+- Main API: `https://ai.bionicaisolutions.com/api`
+- STT Service: `https://ai.bionicaisolutions.com/stt`
+- TTS Service: `https://ai.bionicaisolutions.com/tts`
+- vLLM Service: `https://ai.bionicaisolutions.com/vllm`
 
 **Single Domain:**
 - Main API: `https://ai.bionicaisolutions.com/api`
@@ -134,10 +134,10 @@ Add DNS records pointing to your cluster:
 
 ```bash
 # A Records
-ai-api.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-ai-stt.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-ai-tts.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-ai-vllm.bionicaisolutions.com    A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com/api     A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com/stt     A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com/tts     A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com/vllm    A    YOUR_CLUSTER_IP
 ai.bionicaisolutions.com         A    YOUR_CLUSTER_IP
 ```
 
@@ -203,17 +203,17 @@ kubectl logs -f deployment/ai-vllm-service -n ai-infrastructure
 
 ```bash
 # Test main API
-curl -X POST https://ai-api.bionicaisolutions.com/route \
+curl -X POST https://ai.bionicaisolutions.com/api/route \
   -H "Content-Type: application/json" \
   -d '{"query": "Hello, world!"}'
 
 # Test STT service
-curl -X POST https://ai-stt.bionicaisolutions.com/transcribe \
+curl -X POST https://ai.bionicaisolutions.com/stt/transcribe \
   -F "file=@audio.wav" \
   -F "language=hi"
 
 # Test TTS service
-curl -X POST https://ai-tts.bionicaisolutions.com/synthesize \
+curl -X POST https://ai.bionicaisolutions.com/tts/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello", "language": "hi", "gender": "female"}'
 ```
@@ -263,8 +263,8 @@ kubectl exec -it deployment/ai-routing-api -n ai-infrastructure -- curl http://a
 
 ```bash
 # Test DNS resolution
-nslookup ai-api.bionicaisolutions.com
-dig ai-api.bionicaisolutions.com
+nslookup ai.bionicaisolutions.com/api
+dig ai.bionicaisolutions.com/api
 
 # Check CoreDNS
 kubectl get pods -n kube-system -l k8s-app=kube-dns

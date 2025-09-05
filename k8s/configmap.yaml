@@ -9,10 +9,10 @@ data:
   INTERNAL_DOMAIN: "internal"
   
   # API endpoints
-  ROUTING_API_URL: "https://ai-api.bionicaisolutions.com"
-  STT_API_URL: "https://ai-stt.bionicaisolutions.com"
-  TTS_API_URL: "https://ai-tts.bionicaisolutions.com"
-  VLLM_API_URL: "https://ai-vllm.bionicaisolutions.com"
+  ROUTING_API_URL: "https://ai.bionicaisolutions.com/api"
+  STT_API_URL: "https://ai.bionicaisolutions.com/stt"
+  TTS_API_URL: "https://ai.bionicaisolutions.com/tts"
+  VLLM_API_URL: "https://ai.bionicaisolutions.com/vllm"
   
   # Internal endpoints
   ROUTING_API_INTERNAL: "http://ai-routing-api:8001"

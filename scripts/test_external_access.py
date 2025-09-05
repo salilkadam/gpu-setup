@@ -22,10 +22,10 @@ class ExternalAccessTester:
         
         # External endpoints
         self.endpoints = {
-            "main_api": f"{self.protocol}://ai-api.{base_domain}",
-            "stt_service": f"{self.protocol}://ai-stt.{base_domain}",
-            "tts_service": f"{self.protocol}://ai-tts.{base_domain}",
-            "vllm_service": f"{self.protocol}://ai-vllm.{base_domain}",
+            "main_api": f"{self.protocol}://ai.{base_domain}/api",
+            "stt_service": f"{self.protocol}://ai.{base_domain}/stt",
+            "tts_service": f"{self.protocol}://ai.{base_domain}/tts",
+            "vllm_service": f"{self.protocol}://ai.{base_domain}/vllm",
             "single_domain": f"{self.protocol}://ai.{base_domain}"
         }
         
@@ -105,7 +105,7 @@ class ExternalAccessTester:
         
         # Test single domain endpoint
         single_domain_result = self.test_endpoint_connectivity(
-            f"{self.endpoints['single_domain']}/api", 
+            self.endpoints['main_api'], 
             "Single Domain Routing API"
         )
         results.append(single_domain_result)
@@ -180,7 +180,7 @@ class ExternalAccessTester:
         
         # Test STT single domain
         stt_single_result = self.test_endpoint_connectivity(
-            f"{self.endpoints['single_domain']}/stt", 
+            self.endpoints['stt_service'], 
             "Single Domain STT Service"
         )
         results.append(stt_single_result)
@@ -195,7 +195,7 @@ class ExternalAccessTester:
         
         # Test TTS single domain
         tts_single_result = self.test_endpoint_connectivity(
-            f"{self.endpoints['single_domain']}/tts", 
+            self.endpoints['tts_service'], 
             "Single Domain TTS Service"
         )
         results.append(tts_single_result)
@@ -261,7 +261,7 @@ class ExternalAccessTester:
         
         # Test single domain endpoint
         vllm_single_result = self.test_endpoint_connectivity(
-            f"{self.endpoints['single_domain']}/vllm", 
+            self.endpoints['vllm_service'], 
             "Single Domain vLLM Service"
         )
         results.append(vllm_single_result)
@@ -317,10 +317,6 @@ class ExternalAccessTester:
         
         results = []
         domains = [
-            f"ai-api.{self.base_domain}",
-            f"ai-stt.{self.base_domain}",
-            f"ai-tts.{self.base_domain}",
-            f"ai-vllm.{self.base_domain}",
             f"ai.{self.base_domain}"
         ]
         
@@ -358,10 +354,6 @@ class ExternalAccessTester:
             from datetime import datetime
             
             domains = [
-                f"ai-api.{self.base_domain}",
-                f"ai-stt.{self.base_domain}",
-                f"ai-tts.{self.base_domain}",
-                f"ai-vllm.{self.base_domain}",
                 f"ai.{self.base_domain}"
             ]
             
@@ -476,7 +468,7 @@ class ExternalAccessTester:
         print(f"   STT Service:  {self.endpoints['stt_service']}")
         print(f"   TTS Service:  {self.endpoints['tts_service']}")
         print(f"   vLLM Service: {self.endpoints['vllm_service']}")
-        print(f"   Single Domain: {self.endpoints['single_domain']}")
+        print(f"   Base Domain:  {self.endpoints['single_domain']}")
         
         print(f"\n🏠 Internal Access URLs:")
         print(f"   Main API:     {self.internal_endpoints['main_api']}")

@@ -1,4 +1,4 @@
-# Certificate for external domains
+# Certificate for single domain
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -6,23 +6,6 @@ metadata:
   namespace: ai-infrastructure
 spec:
   secretName: ai-infrastructure-tls
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  dnsNames:
-  - ai-api.bionicaisolutions.com
-  - ai-stt.bionicaisolutions.com
-  - ai-tts.bionicaisolutions.com
-  - ai-vllm.bionicaisolutions.com
----
-# Certificate for single domain
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: ai-infrastructure-single-tls
-  namespace: ai-infrastructure
-spec:
-  secretName: ai-infrastructure-single-tls
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer

@@ -47,17 +47,17 @@ Add these DNS records to your DNS provider:
 
 ```bash
 # A Records (replace YOUR_CLUSTER_IP with your actual cluster IP)
-ai-api.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-ai-stt.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-ai-tts.bionicaisolutions.com     A    YOUR_CLUSTER_IP
-ai-vllm.bionicaisolutions.com    A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com     A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com/stt     A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com/tts     A    YOUR_CLUSTER_IP
+ai.bionicaisolutions.com/vllm    A    YOUR_CLUSTER_IP
 ai.bionicaisolutions.com         A    YOUR_CLUSTER_IP
 
 # CNAME Records (if using load balancer)
-ai-api.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
-ai-stt.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
-ai-tts.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
-ai-vllm.bionicaisolutions.com    CNAME    your-loadbalancer.bionicaisolutions.com
+ai.bionicaisolutions.com     CNAME    your-loadbalancer.bionicaisolutions.com
+ai.bionicaisolutions.com/stt     CNAME    your-loadbalancer.bionicaisolutions.com
+ai.bionicaisolutions.com/tts     CNAME    your-loadbalancer.bionicaisolutions.com
+ai.bionicaisolutions.com/vllm    CNAME    your-loadbalancer.bionicaisolutions.com
 ai.bionicaisolutions.com         CNAME    your-loadbalancer.bionicaisolutions.com
 ```
 
@@ -74,12 +74,6 @@ python3 scripts/test_external_access.py --domain bionicaisolutions.com --http
 ## 🌐 **Access Methods**
 
 ### **1. External Ingress (Production)**
-
-**Multiple Domains:**
-- Main API: `https://ai-api.bionicaisolutions.com`
-- STT Service: `https://ai-stt.bionicaisolutions.com`
-- TTS Service: `https://ai-tts.bionicaisolutions.com`
-- vLLM Service: `https://ai-vllm.bionicaisolutions.com`
 
 **Single Domain with Paths:**
 - Main API: `https://ai.bionicaisolutions.com/api`
@@ -168,36 +162,36 @@ sudo ufw allow from 192.168.0.0/16
 
 ```bash
 # Test DNS resolution
-nslookup ai-api.bionicaisolutions.com
-dig ai-api.bionicaisolutions.com
+nslookup ai.bionicaisolutions.com
+dig ai.bionicaisolutions.com
 
 # Test HTTP connectivity
-curl -I https://ai-api.bionicaisolutions.com/health
-curl -I https://ai-stt.bionicaisolutions.com/health
-curl -I https://ai-tts.bionicaisolutions.com/health
-curl -I https://ai-vllm.bionicaisolutions.com/health
+curl -I https://ai.bionicaisolutions.com/health
+curl -I https://ai.bionicaisolutions.com/stt/health
+curl -I https://ai.bionicaisolutions.com/tts/health
+curl -I https://ai.bionicaisolutions.com/vllm/health
 ```
 
 ### **2. API Functionality Test**
 
 ```bash
 # Test main routing API
-curl -X POST https://ai-api.bionicaisolutions.com/route \
+curl -X POST https://ai.bionicaisolutions.com/route \
   -H "Content-Type: application/json" \
   -d '{"query": "Hello, world!", "modality": "text"}'
 
 # Test STT service
-curl -X POST https://ai-stt.bionicaisolutions.com/transcribe \
+curl -X POST https://ai.bionicaisolutions.com/stt/transcribe \
   -F "file=@audio.wav" \
   -F "language=hi"
 
 # Test TTS service
-curl -X POST https://ai-tts.bionicaisolutions.com/synthesize \
+curl -X POST https://ai.bionicaisolutions.com/tts/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello", "language": "hi", "gender": "female"}'
 
 # Test vLLM service
-curl -X POST https://ai-vllm.bionicaisolutions.com/v1/completions \
+curl -X POST https://ai.bionicaisolutions.com/vllm/v1/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "MiniCPM-V-4", "prompt": "Hello", "max_tokens": 10}'
 ```
@@ -233,10 +227,10 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-  - ai-api.bionicaisolutions.com
-  - ai-stt.bionicaisolutions.com
-  - ai-tts.bionicaisolutions.com
-  - ai-vllm.bionicaisolutions.com
+  - ai.bionicaisolutions.com
+  - ai.bionicaisolutions.com/stt
+  - ai.bionicaisolutions.com/tts
+  - ai.bionicaisolutions.com/vllm
 ```
 
 ### **2. Network Policies**
@@ -317,13 +311,13 @@ kubectl logs -f deployment/ai-vllm-service -n ai-infrastructure
 
 ```bash
 # Test health endpoints
-curl https://ai-api.bionicaisolutions.com/health
-curl https://ai-stt.bionicaisolutions.com/health
-curl https://ai-tts.bionicaisolutions.com/health
-curl https://ai-vllm.bionicaisolutions.com/health
+curl https://ai.bionicaisolutions.com/health
+curl https://ai.bionicaisolutions.com/stt/health
+curl https://ai.bionicaisolutions.com/tts/health
+curl https://ai.bionicaisolutions.com/vllm/health
 
 # Test performance
-curl https://ai-api.bionicaisolutions.com/stats
+curl https://ai.bionicaisolutions.com/stats
 ```
 
 ## 🛠️ **Troubleshooting**
@@ -332,15 +326,15 @@ curl https://ai-api.bionicaisolutions.com/stats
 
 ```bash
 # Check DNS resolution
-nslookup ai-api.bionicaisolutions.com
-dig ai-api.bionicaisolutions.com
+nslookup ai.bionicaisolutions.com
+dig ai.bionicaisolutions.com
 
 # Check DNS propagation
-dig @8.8.8.8 ai-api.bionicaisolutions.com
-dig @1.1.1.1 ai-api.bionicaisolutions.com
+dig @8.8.8.8 ai.bionicaisolutions.com
+dig @1.1.1.1 ai.bionicaisolutions.com
 
 # Test from different locations
-curl -I https://ai-api.bionicaisolutions.com/health
+curl -I https://ai.bionicaisolutions.com/health
 ```
 
 ### **2. SSL Certificate Issues**
@@ -438,7 +432,7 @@ kubectl apply -f k8s/certificate.yaml
 import requests
 
 # External access
-BASE_URL = "https://ai-api.bionicaisolutions.com"
+BASE_URL = "https://ai.bionicaisolutions.com"
 
 def query_ai(text, modality="text"):
     response = requests.post(f"{BASE_URL}/route", json={
@@ -456,7 +450,7 @@ print(result["result"])
 
 ```javascript
 // External access
-const BASE_URL = 'https://ai-api.bionicaisolutions.com';
+const BASE_URL = 'https://ai.bionicaisolutions.com';
 
 async function queryAI(text, modality = 'text') {
     const response = await fetch(`${BASE_URL}/route`, {
@@ -476,15 +470,15 @@ console.log(result.result);
 
 ```bash
 # External access examples
-curl -X POST https://ai-api.bionicaisolutions.com/route \
+curl -X POST https://ai.bionicaisolutions.com/route \
   -H "Content-Type: application/json" \
   -d '{"query": "Hello, world!", "modality": "text"}'
 
-curl -X POST https://ai-stt.bionicaisolutions.com/transcribe \
+curl -X POST https://ai.bionicaisolutions.com/stt/transcribe \
   -F "file=@audio.wav" \
   -F "language=hi"
 
-curl -X POST https://ai-tts.bionicaisolutions.com/synthesize \
+curl -X POST https://ai.bionicaisolutions.com/tts/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello", "language": "hi", "gender": "female"}'
 ```
