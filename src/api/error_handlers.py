@@ -94,7 +94,7 @@ def setup_error_handlers(app: FastAPI):
                     "type": "RoutingError",
                     "code": exc.error_code,
                     "message": exc.message,
-                    "timestamp": request.state.get("timestamp", "unknown")
+                    "timestamp": getattr(request.state, "timestamp", "unknown")
                 }
             }
         )
@@ -111,7 +111,7 @@ def setup_error_handlers(app: FastAPI):
                     "type": "HTTPException",
                     "code": f"HTTP_{exc.status_code}",
                     "message": exc.detail,
-                    "timestamp": request.state.get("timestamp", "unknown")
+                    "timestamp": getattr(request.state, "timestamp", "unknown")
                 }
             }
         )
@@ -128,7 +128,7 @@ def setup_error_handlers(app: FastAPI):
                     "type": "StarletteHTTPException",
                     "code": f"HTTP_{exc.status_code}",
                     "message": exc.detail,
-                    "timestamp": request.state.get("timestamp", "unknown")
+                    "timestamp": getattr(request.state, "timestamp", "unknown")
                 }
             }
         )
@@ -146,7 +146,7 @@ def setup_error_handlers(app: FastAPI):
                     "code": "VALIDATION_ERROR",
                     "message": "Request validation failed",
                     "details": exc.errors(),
-                    "timestamp": request.state.get("timestamp", "unknown")
+                    "timestamp": getattr(request.state, "timestamp", "unknown")
                 }
             }
         )
@@ -163,7 +163,7 @@ def setup_error_handlers(app: FastAPI):
                     "type": "InternalServerError",
                     "code": "INTERNAL_ERROR",
                     "message": "An unexpected error occurred",
-                    "timestamp": request.state.get("timestamp", "unknown")
+                    "timestamp": getattr(request.state, "timestamp", "unknown")
                 }
             }
         )
