@@ -129,6 +129,68 @@ services:
       retries: 3
       start_period: 30s
 
+  # STT Service (Speech-to-Text)
+  stt-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.audio
+    container_name: ai-stt-service
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - /opt/ai-models/models:/opt/ai-models/models:ro
+      - stt_cache:/app/cache
+      - stt_logs:/app/logs
+    command: ["python", "-m", "uvicorn", "src.audio.stt_service:app", "--host", "0.0.0.0", "--port", "8002"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # TTS Service (Text-to-Speech)
+  tts-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.audio
+    container_name: ai-tts-service
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - /opt/ai-models/models:/opt/ai-models/models:ro
+      - tts_cache:/app/cache
+      - tts_logs:/app/logs
+    command: ["python", "-m", "uvicorn", "src.audio.tts_service:app", "--host", "0.0.0.0", "--port", "8003"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
   # Python Testing Service (Updated for vLLM)
   python-testing:
     image: python:3.10-slim
@@ -138,6 +200,8 @@ services:
       - MODELS_DIR=/opt/ai-models
       - VLLM_URL=http://vllm-inference-server:8000
       - ROUTING_URL=http://routing-api:8001
+      - STT_URL=http://stt-service:8002
+      - TTS_URL=http://tts-service:8003
     volumes:
       # Mount centralized model storage
       - /opt/ai-models:/opt/ai-models:ro
@@ -147,6 +211,8 @@ services:
     depends_on:
       - vllm-inference-server
       - routing-api
+      - stt-service
+      - tts-service
 
 volumes:
   redis_data:
@@ -158,4 +224,12 @@ volumes:
   vllm_cache:
     driver: local
   vllm_logs:
+    driver: local
+  stt_cache:
+    driver: local
+  stt_logs:
+    driver: local
+  tts_cache:
+    driver: local
+  tts_logs:
     driver: local
