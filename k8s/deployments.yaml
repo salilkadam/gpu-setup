@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-routing-api
+  namespace: ai-infrastructure
+  labels:
+    app: ai-routing-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-routing-api
+  template:
+    metadata:
+      labels:
+        app: ai-routing-api
+    spec:
+      containers:
+      - name: routing-api
+        image: python:3.11-slim
+        ports:
+        - containerPort: 8001
+        env:
+        - name: REDIS_URL
+          value: "redis://ai-redis:6379"
+        - name: VLLM_URL
+          value: "http://ai-vllm-service:8000"
+        - name: STT_URL
+          value: "http://ai-stt-service:8002"
+        - name: TTS_URL
+          value: "http://ai-tts-service:8003"
+        command: ["python", "-c", "print('Routing API placeholder - needs actual implementation')"]
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-vllm-service
+  namespace: ai-infrastructure
+  labels:
+    app: ai-vllm-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-vllm-service
+  template:
+    metadata:
+      labels:
+        app: ai-vllm-service
+    spec:
+      containers:
+      - name: vllm-service
+        image: python:3.11-slim
+        ports:
+        - containerPort: 8000
+        command: ["python", "-c", "print('vLLM Service placeholder - needs actual implementation')"]
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "8Gi"
+            cpu: "2000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-stt-service
+  namespace: ai-infrastructure
+  labels:
+    app: ai-stt-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-stt-service
+  template:
+    metadata:
+      labels:
+        app: ai-stt-service
+    spec:
+      containers:
+      - name: stt-service
+        image: python:3.11-slim
+        ports:
+        - containerPort: 8002
+        command: ["python", "-c", "print('STT Service placeholder - needs actual implementation')"]
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "200m"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-tts-service
+  namespace: ai-infrastructure
+  labels:
+    app: ai-tts-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-tts-service
+  template:
+    metadata:
+      labels:
+        app: ai-tts-service
+    spec:
+      containers:
+      - name: tts-service
+        image: python:3.11-slim
+        ports:
+        - containerPort: 8003
+        command: ["python", "-c", "print('TTS Service placeholder - needs actual implementation')"]
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "200m"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-redis
+  namespace: ai-infrastructure
+  labels:
+    app: ai-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-redis
+  template:
+    metadata:
+      labels:
+        app: ai-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
