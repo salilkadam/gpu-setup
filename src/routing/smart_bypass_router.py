@@ -81,32 +81,32 @@ class SmartBypassRouter:
         self.redis_client = redis.from_url(redis_url, decode_responses=True)
         self.model_endpoints = {
             "agent": {
-                "endpoint": "http://192.168.0.21:8000",
+                "endpoint": "http://192.168.0.20:8000",
                 "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             "multimodal": {
-                "endpoint": "http://192.168.0.21:8000", 
+                "endpoint": "http://192.168.0.20:8000", 
                 "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             "avatar": {
-                "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
+                "endpoint": "http://192.168.0.20:8000",  # Shared with multimodal
                 "model_id": "/app/models/minicpm-v-4",
                 "port": 8000
             },
             "video": {
-                "endpoint": "http://192.168.0.21:8000",  # Shared with multimodal
+                "endpoint": "http://192.168.0.20:8000",  # Shared with multimodal
                 "model_id": "/app/models/minicpm-v-4", 
                 "port": 8000
             },
             "stt": {
-                "endpoint": "http://192.168.0.21:8002",
+                "endpoint": "http://192.168.0.20:8002",
                 "model_id": "whisper-large-v3",
                 "port": 8002
             },
             "tts": {
-                "endpoint": "http://192.168.0.21:8003",
+                "endpoint": "http://192.168.0.20:8003",
                 "model_id": "coqui-tts",
                 "port": 8003
             }

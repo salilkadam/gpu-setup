@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TTSService:
-    def __init__(self, models_dir: str = "/opt/ai-models/models"):
+    def __init__(self, models_dir: str = "/opt/ai-models/models/text_to_speech"):
         """Initialize the TTS service with Coqui TTS models"""
         self.models_dir = models_dir
         self.device = "cpu"  # Use CPU to avoid GPU memory conflicts

@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class STTService:
-    def __init__(self, model_path: str = "/opt/ai-models/models/whisper-large-v3"):
+    def __init__(self, model_path: str = "/opt/ai-models/models/speech_to_text/whisper-large-v3"):
         """Initialize the STT service with Whisper Large v3"""
         self.model_path = model_path
         self.device = "cpu"  # Use CPU to avoid GPU memory conflicts

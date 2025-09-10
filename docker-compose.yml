@@ -16,7 +16,7 @@ services:
       - /opt/ai-models/models:/app/models:ro
       - vllm_cache:/app/cache
       - vllm_logs:/app/logs
-    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/minicpm-v-4", "--trust-remote-code"]
+    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/multimodal/minicpm-v-4", "--trust-remote-code"]
     deploy:
       resources:
         reservations:

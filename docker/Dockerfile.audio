@@ -22,7 +22,8 @@ RUN pip install --no-cache-dir \
     transformers \
     librosa \
     numpy \
-    python-multipart
+    python-multipart \
+    protobuf
 
 # Copy audio services
 COPY src/audio/ ./src/audio/

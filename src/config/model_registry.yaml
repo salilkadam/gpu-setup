@@ -261,7 +261,7 @@ models:
 backends:
   vllm:
     type: "vllm"
-    base_url: "http://192.168.0.21:8000"
+    base_url: "http://192.168.0.20:8000"
     timeout: 30
     max_retries: 3
     health_check_interval: 10

@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    huggingface_hub \
+    transformers \
+    torch \
+    accelerate
+
+# Create working directory
+WORKDIR /app
+
+# Copy download scripts
+COPY scripts/download_all_use_case_models.py /app/
+COPY scripts/download_essential_models.py /app/scripts/
+
+# Set environment variables
+ENV HF_HOME=/opt/ai-models/cache
+ENV TRANSFORMERS_CACHE=/opt/ai-models/cache
+
+# Create mount point for models
+VOLUME ["/opt/ai-models"]
+
+# Run the download script
+CMD ["python", "download_all_use_case_models.py"]

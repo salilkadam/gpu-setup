@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    requests \
+    pillow
+
+# Copy test script
+COPY test_image_processing.py /app/
+
+# Run the test
+CMD ["python", "test_image_processing.py"]

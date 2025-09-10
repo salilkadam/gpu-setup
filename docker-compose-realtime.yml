@@ -18,7 +18,7 @@ services:
       - /opt/ai-models/models:/app/models:ro
       - vllm_agent_cache:/app/cache
       - vllm_agent_logs:/app/logs
-    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/minicpm-v-4", "--trust-remote-code"]
+    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/text_generation/qwen2.5-7b-instruct", "--trust-remote-code"]
     deploy:
       resources:
         reservations:
@@ -49,7 +49,7 @@ services:
       - /opt/ai-models/models:/app/models:ro
       - vllm_multimodal_cache:/app/cache
       - vllm_multimodal_logs:/app/logs
-    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/minicpm-v-4", "--trust-remote-code"]
+    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/text_generation/qwen2.5-7b-instruct", "--trust-remote-code"]
     deploy:
       resources:
         reservations:
@@ -80,7 +80,7 @@ services:
       - /opt/ai-models/models:/app/models:ro
       - vllm_audio_cache:/app/cache
       - vllm_audio_logs:/app/logs
-    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/minicpm-v-4", "--trust-remote-code"]
+    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/text_generation/qwen2.5-7b-instruct", "--trust-remote-code"]
     deploy:
       resources:
         reservations:

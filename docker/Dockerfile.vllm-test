@@ -1,0 +1,16 @@
+FROM vllm/vllm-openai:latest
+
+# Install additional dependencies for testing
+RUN pip install --no-cache-dir requests
+
+# Copy test script
+COPY test-minicpm-vllm.py /app/
+
+# Set working directory
+WORKDIR /app
+
+# Create mount point for models
+VOLUME ["/opt/ai-models"]
+
+# Run the test
+CMD ["python", "test-minicpm-vllm.py"]
