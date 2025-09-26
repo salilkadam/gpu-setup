@@ -1,3 +1,3 @@
 # AI services are running in Docker containers on the host
-# Kubernetes services are configured to route to host IP: 192.168.0.21
+# Kubernetes services are configured to route to host IP: 192.168.0.20
 # No deployments needed - using existing Docker services

@@ -1,279 +1,246 @@
-# vLLM Blackwell GPU Setup
+# AI Infrastructure - Complete Setup
 
-🚀 **Complete infrastructure for deploying vLLM on cutting-edge Blackwell GPUs with intelligent model routing and smart bypass optimization**
+## 🎯 **Overview**
 
-## 🎯 Project Overview
+This repository contains a complete AI infrastructure setup with:
+- **Docker containers** running AI services (vLLM, STT, TTS, Routing API)
+- **Kubernetes cluster** integration for orchestration
+- **External access** via `api.askcollections.com` with HTTPS support
+- **Cloudflare integration** for production deployment
+- **Monitoring** with Prometheus and Grafana
 
-This project provides a complete solution for deploying vLLM (Very Large Language Model) inference server on cutting-edge Blackwell GPUs (RTX 5090, RTX PRO 6000) with Ubuntu 24.04. The setup includes intelligent model routing, smart bypass optimization for real-time conversations, performance optimization, and comprehensive testing.
+## 🚀 **Quick Start**
 
-## ✨ Key Features
-
-- **✅ vLLM Deployment**: Successfully deployed on Blackwell GPUs
-- **🧠 Intelligent Model Routing**: Smart model selection based on query type
-- **🚀 Smart Bypass Optimization**: Ultra-low latency for real-time conversations
-- **📊 Performance Optimization**: Optimized for cutting-edge hardware
-- **🔧 Docker Integration**: Complete containerized setup
-- **📈 Monitoring**: Prometheus + Grafana monitoring stack
-- **🧪 Comprehensive Testing**: Full test suite for all use cases
-- **🖼️ Multimodal Capabilities**: Image and video processing with MiniCPM-V-4
-- **🌐 Internal DNS Routing**: Kubernetes cluster access to Docker AI services
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Client Apps   │───▶│  Smart Router   │───▶│  vLLM Server    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │                        │
-                                ▼                        ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │  Session Cache  │    │  GPU Memory     │
-                       │  (Redis)        │    │  (Pre-loaded)   │
-                       └─────────────────┘    └─────────────────┘
-```
-
-## 🎮 Use Cases Supported
-
-1. **🚀 Talking Head Avatars & Lip Sync**
-2. **🗣️ Multilingual STT (Indian Languages)**
-3. **🎵 Multilingual TTS (Indian Languages)**
-4. **🤖 Content Generation & Executing Agents**
-5. **📊 Multi-Modal Temporal Agentic RAG**
-6. **🎬 Video-to-Text Understanding**
-
-## 📦 Models Included
-
-### **✅ Currently Deployed**
-- **MiniCPM-V-4** (7GB) - Multimodal vision-language model with image/video capabilities
-- **Whisper Large v3** - Speech-to-text for Indian languages
-- **Coqui TTS** - Text-to-speech for Indian languages
-
-### **🔧 Model Capabilities**
-- **Image Processing**: Up to 448x448 pixels with batch processing
-- **Video Understanding**: Frame analysis and temporal understanding
-- **Multimodal Tasks**: Image+text and video+text analysis
-- **Scene Understanding**: Object detection and scene description
-- **Gemma-7B-IT** - Google's instruction-tuned model
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Ubuntu 24.04 LTS
-- NVIDIA Blackwell GPUs (RTX 5090, RTX PRO 6000)
-- Docker with GPU support
-- CUDA 12.9+
-- NVIDIA Driver 580.82.07+
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/salilkadam/gpu-setup.git
-   cd gpu-setup
-   ```
-
-2. **Start the services (Standard)**
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Start the services (Real-Time Optimized)**
-   ```bash
-   docker-compose -f docker-compose-realtime.yml up -d
-   ```
-
-4. **Test the API**
-   ```bash
-   curl -X POST http://localhost:8000/v1/completions \
-     -H "Content-Type: application/json" \
-     -d '{"model": "/app/models/qwen2.5-7b-instruct", "prompt": "Hello, world!", "max_tokens": 50}'
-   ```
-
-## 📊 Performance Results
-
-### **Model Performance**
-| Model | Size | Load Time | Inference Speed | Quality |
-|-------|------|-----------|-----------------|---------|
-| Phi-2 | 5.2GB | 2.1s | Excellent | High |
-| Qwen2.5-7B-Instruct | 15GB | 2.3s | Excellent | Superior |
-
-### **Smart Bypass Optimization**
-| Metric | Original System | Smart Bypass | Improvement |
-|--------|----------------|--------------|-------------|
-| **First Request** | 2.3-5.6s | 250-300ms | **90%+ faster** |
-| **Ongoing Conversation** | 250-500ms | 200-250ms | **50% faster** |
-| **Routing Overhead** | 50-100ms | 1-5ms | **95% reduction** |
-| **Bypass Rate** | 0% | 80-95% | **Real-time ready** |
-
-### **Space Optimization**
-- **Before**: 155GB (25 models)
-- **After**: 20.2GB (2 models)
-- **Space Saved**: 135GB (87% reduction)
-
-## 🧪 Testing
-
-### **Run All Tests**
+### **For Fresh Installation**
 ```bash
-python3 scripts/test_vllm_compatible_models.py
+# Clone and setup from scratch
+git clone <repository-url>
+cd gpu-setup
+./scripts/setup-ai-infrastructure.sh
 ```
 
-### **Test Smart Bypass Optimization**
+### **For Current Setup**
 ```bash
-python3 scripts/test_smart_bypass.py
+# Test current setup
+./scripts/test-current-setup.sh
+
+# Deploy Kubernetes resources
+cd k8s && ./deploy.sh
 ```
 
-### **Test Specific Model**
+## 📚 **Documentation**
+
+### **Complete Guides**
+- **[Complete Setup Guide](docs/COMPLETE-SETUP-GUIDE.md)** - Step-by-step setup from scratch
+- **[Quick Reference](docs/QUICK-REFERENCE.md)** - Current setup management and troubleshooting
+
+### **API Documentation**
+- **[API Reference](docs/api-reference.md)** - Complete API documentation
+- **[App Integration Guide](docs/app-integration-guide.md)** - Integration examples
+
+## 🌐 **Live API Endpoints**
+
+Your AI services are accessible at:
+
+| Service | Endpoint | Description |
+|---------|----------|-------------|
+| **Main API** | `https://api.askcollections.com/api/` | AI routing and chat |
+| **Health Check** | `https://api.askcollections.com/health` | System health status |
+| **STT Service** | `https://api.askcollections.com/stt/health` | Speech-to-Text |
+| **TTS Service** | `https://api.askcollections.com/tts/health` | Text-to-Speech |
+| **vLLM Direct** | `https://api.askcollections.com/vllm/v1/models` | Direct model access |
+
+### **Example Usage**
 ```bash
-python3 scripts/test_single_model.py --model qwen2.5-7b-instruct
+# AI Chat Request
+curl -X POST https://api.askcollections.com/api/route \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Hello, how are you?", "max_tokens": 100}'
+
+# Health Check
+curl https://api.askcollections.com/health
 ```
 
-## 📁 Project Structure
+## 🏗️ **Architecture**
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Cloudflare    │────│  nginx Ingress   │────│  Kubernetes     │
+│   (HTTPS)       │    │  (SSL/TLS)       │    │  Services       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                                         │
+                                                         ▼
+                                               ┌─────────────────┐
+                                               │  Docker         │
+                                               │  Containers     │
+                                               │  (AI Services)  │
+                                               └─────────────────┘
+```
+
+### **Components**
+- **Frontend**: Cloudflare CDN with HTTPS termination
+- **Ingress**: nginx Ingress Controller with SSL certificates
+- **Orchestration**: Kubernetes cluster (K3s)
+- **Services**: Docker containers with AI models
+- **Monitoring**: Prometheus + Grafana
+
+## 🔧 **Management**
+
+### **Service Management**
+```bash
+# Docker services
+docker compose ps                    # Check status
+docker compose logs -f routing-api   # View logs
+docker compose restart routing-api   # Restart service
+
+# Kubernetes services
+kubectl get all -n ai-infrastructure # Check status
+kubectl logs -f deployment/ai-routing-api -n ai-infrastructure # View logs
+```
+
+### **Monitoring**
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **GPU Usage**: `nvidia-smi`
+- **System Resources**: `htop`
+
+## 🛠️ **Scripts**
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/setup-ai-infrastructure.sh` | Complete setup from scratch |
+| `scripts/test-current-setup.sh` | Test all components |
+| `scripts/cleanup-and-organize.sh` | Clean up redundant files |
+| `k8s/deploy.sh` | Deploy Kubernetes resources |
+
+## 📁 **Project Structure**
 
 ```
 gpu-setup/
-├── docs/                          # Documentation
-│   └── feature/
-│       └── vllm-blackwell-gpu-setup/
-│           ├── implementation-plan.md
-│           ├── implementation-tracker.md
-│           ├── scratchpad.md
-│           ├── model-compatibility-report.md
-│           ├── vllm-compatible-models.md
-│           ├── performance-comparable-models.md
-│           ├── latency-analysis-and-optimization.md
-│           └── smart-bypass-optimization.md
-├── scripts/                       # Automation scripts
-│   ├── build-vllm.sh
-│   ├── download_all_use_case_models.py
-│   ├── test_all_models_vllm.py
-│   ├── test_vllm_compatible_models.py
-│   └── test_smart_bypass.py
-├── src/                           # Source code
-│   ├── routing/                   # Routing components
-│   │   ├── smart_bypass_router.py
-│   │   └── realtime_router.py
-│   └── api/                       # API components
-│       └── realtime_routing_api.py
-├── docker-compose.yml             # Standard deployment
-├── docker-compose-realtime.yml    # Real-time optimized deployment
-├── Dockerfile.vllm               # vLLM container
-├── prometheus/                   # Monitoring config
-├── grafana/                      # Dashboard config
-└── README.md                     # This file
+├── README.md                        # This file
+├── docker-compose.yml               # Docker services
+├── Dockerfile.routing               # Routing API container
+├── requirements-routing.txt         # Python dependencies
+├── k8s/                            # Kubernetes configurations
+│   ├── namespace.yaml              # Namespace
+│   ├── services.yaml               # Services
+│   ├── endpoints.yaml              # Endpoints
+│   ├── nginx-external-ingress.yaml # External ingress
+│   ├── letsencrypt-issuer.yaml    # SSL certificates
+│   └── deploy.sh                   # Deployment script
+├── scripts/                        # Management scripts
+│   ├── setup-ai-infrastructure.sh  # Complete setup
+│   ├── test-current-setup.sh       # Testing
+│   └── cleanup-and-organize.sh     # Cleanup
+├── docs/                           # Documentation
+│   ├── COMPLETE-SETUP-GUIDE.md     # Setup guide
+│   ├── QUICK-REFERENCE.md          # Quick reference
+│   └── api-reference.md            # API docs
+└── src/                            # Source code
+    ├── api/                        # API implementation
+    ├── routing/                    # Routing logic
+    └── config/                     # Configuration
 ```
 
-## 🔧 Configuration
+## 🚨 **Troubleshooting**
 
-### **Environment Variables**
+### **Common Issues**
+
+#### **Services Not Responding**
 ```bash
-# GPU Configuration
-NVIDIA_VISIBLE_DEVICES=all
-CUDA_DEVICE_ORDER=PCI_BUS_ID
+# Check Docker services
+docker compose ps
+docker compose logs
 
-# vLLM Configuration
-VLLM_USE_TRITON_KERNEL=0
-VLLM_GPU_MEMORY_UTILIZATION=0.9
-
-# Smart Bypass Configuration
-ROUTING_MODE=realtime
-REDIS_URL=redis://localhost:6379
+# Check Kubernetes services
+kubectl get pods -n ai-infrastructure
+kubectl get endpoints -n ai-infrastructure
 ```
 
-### **Model Configuration**
-Models are stored in `/opt/ai-models/models/` and mounted into containers.
+#### **External Access Issues**
+```bash
+# Check ingress status
+kubectl describe ingress ai-external-ingress -n ai-infrastructure
 
-## 📈 Monitoring
+# Check DNS resolution
+nslookup api.askcollections.com
 
-Access monitoring dashboards:
-- **Grafana**: http://localhost:3000
+# Test direct access
+curl -H "Host: api.askcollections.com" http://192.168.0.20/api/health
+```
+
+#### **SSL Certificate Issues**
+```bash
+# Check certificate status
+kubectl get certificates -n ai-infrastructure
+kubectl describe certificate api-askcollections-com-tls -n ai-infrastructure
+
+# Check cert-manager
+kubectl get pods -n cert-manager
+```
+
+### **Emergency Recovery**
+```bash
+# Restart all services
+docker compose down && docker compose up -d
+kubectl rollout restart deployment -n ai-infrastructure
+
+# Complete rebuild
+docker compose build --no-cache
+docker compose up -d
+kubectl apply -f k8s/
+```
+
+## 📊 **Status**
+
+| Component | Status | Health |
+|-----------|--------|--------|
+| **Docker Services** | ✅ Running | 9/9 containers healthy |
+| **Kubernetes** | ✅ Active | All services running |
+| **External Access** | ✅ Working | HTTPS via Cloudflare |
+| **SSL Certificates** | ✅ Valid | Let's Encrypt managed |
+| **AI Models** | ✅ Loaded | MiniCPM-V-4, Whisper |
+| **Monitoring** | ✅ Active | Prometheus + Grafana |
+
+## 🔄 **Updates**
+
+### **Update Services**
+```bash
+# Update Docker services
+docker compose pull
+docker compose up -d
+
+# Update Kubernetes
+kubectl apply -f k8s/
+```
+
+### **Backup and Recovery**
+```bash
+# Backup
+kubectl get all -n ai-infrastructure -o yaml > backup.yaml
+sudo tar -czf models-backup.tar.gz /opt/ai-models/
+
+# Restore
+kubectl apply -f backup.yaml
+sudo tar -xzf models-backup.tar.gz -C /
+```
+
+## 📞 **Support**
+
+### **Resources**
+- **Documentation**: [docs/](docs/)
+- **API Reference**: [docs/api-reference.md](docs/api-reference.md)
+- **Quick Reference**: [docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)
+
+### **Monitoring**
 - **Prometheus**: http://localhost:9090
-- **vLLM API**: http://localhost:8000
-- **Real-Time Routing API**: http://localhost:8001
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 🖼️ vLLM Multimodal Capabilities
-
-The vLLM endpoint supports advanced multimodal processing with the MiniCPM-V-4 model:
-
-### Image Processing
-- **Image Analysis**: Describe and analyze image content
-- **Object Detection**: Identify objects in images
-- **Scene Understanding**: Understand complex scenes and contexts
-- **Format Support**: JPEG, PNG, and other common formats
-
-### Video Understanding
-- **Frame Analysis**: Process individual video frames
-- **Temporal Analysis**: Understand video sequences over time
-- **Action Recognition**: Identify actions and movements
-- **Content Summarization**: Summarize video content
-
-### API Usage Examples
-
-#### Direct vLLM Endpoint
-```bash
-curl -X POST http://192.168.0.21:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "/app/models/minicpm-v-4",
-    "messages": [
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "Describe what you see in this image"
-          },
-          {
-            "type": "image_url",
-            "image_url": {
-              "url": "data:image/jpeg;base64,YOUR_IMAGE_BASE64"
-            }
-          }
-        ]
-      }
-    ]
-  }'
-```
-
-#### Through Routing API
-```bash
-curl -X POST http://192.168.0.21:8001/route \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "Analyze this image and describe what you see",
-    "use_case": "multimodal"
-  }'
-```
-
-For detailed information, see [VLLM Multimodal Capabilities Documentation](docs/VLLM-MULTIMODAL-CAPABILITIES.md).
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **vLLM Team** for the excellent inference server
-- **NVIDIA** for Blackwell GPU support
-- **Hugging Face** for model hosting
-- **Qwen Team** for high-performance models
-
-## 📞 Support
-
-For support and questions:
-- Create an issue in this repository
-- Check the documentation in `docs/`
-- Review the implementation tracker
+- **Grafana**: http://localhost:3000
+- **Service Health**: `./scripts/test-current-setup.sh`
 
 ---
 
-**Status**: ✅ **Production Ready with Real-Time Optimization**  
-**Last Updated**: December 19, 2024  
+**Status**: ✅ **Production Ready**  
+**Last Updated**: January 2025  
 **Version**: 2.0.0
+
+This infrastructure provides a complete, production-ready AI service platform with external access, monitoring, and automated management.

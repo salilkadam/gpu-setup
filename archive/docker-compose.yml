@@ -1,0 +1,235 @@
+services:
+  # vLLM Inference Server (Using Community Image - Working with Blackwell GPUs)
+  vllm-inference-server:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-inference-server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"  # OpenAI-compatible API
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+      - VLLM_USE_TRITON_KERNEL=0  # Disable Triton kernels for compatibility
+    volumes:
+      # Mount centralized model storage
+      - /opt/ai-models/models:/app/models:ro
+      - vllm_cache:/app/cache
+      - vllm_logs:/app/logs
+    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/multimodal/minicpm-v-4", "--trust-remote-code"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: ai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - vllm-inference-server
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Intelligent Model Routing System
+  routing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.routing
+    container_name: ai-routing-api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"  # Routing API port
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+      - VLLM_BASE_URL=http://vllm-inference-server:8000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - /opt/ai-models:/opt/ai-models:ro
+      - ./src/config:/app/src/config:ro
+      - ./logs:/app/logs
+    depends_on:
+      - vllm-inference-server
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # STT Service (Speech-to-Text)
+  stt-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.audio
+    container_name: ai-stt-service
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - /opt/ai-models/models:/opt/ai-models/models:ro
+      - stt_cache:/app/cache
+      - stt_logs:/app/logs
+    command: ["python", "-m", "uvicorn", "src.audio.stt_service:app", "--host", "0.0.0.0", "--port", "8002"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # TTS Service (Text-to-Speech)
+  tts-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.audio
+    container_name: ai-tts-service
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - /opt/ai-models/models:/opt/ai-models/models:ro
+      - tts_cache:/app/cache
+      - tts_logs:/app/logs
+    command: ["python", "-m", "uvicorn", "src.audio.tts_service:app", "--host", "0.0.0.0", "--port", "8003"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Python Testing Service (Updated for vLLM)
+  python-testing:
+    image: python:3.10-slim
+    container_name: ai-python-testing
+    restart: unless-stopped
+    environment:
+      - MODELS_DIR=/opt/ai-models
+      - VLLM_URL=http://vllm-inference-server:8000
+      - ROUTING_URL=http://routing-api:8001
+      - STT_URL=http://stt-service:8002
+      - TTS_URL=http://tts-service:8003
+    volumes:
+      # Mount centralized model storage
+      - /opt/ai-models:/opt/ai-models:ro
+      - ./test-results:/app/test-results
+    working_dir: /app
+    command: ["python", "-c", "print('vLLM testing service ready')"]
+    depends_on:
+      - vllm-inference-server
+      - routing-api
+      - stt-service
+      - tts-service
+
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  vllm_cache:
+    driver: local
+  vllm_logs:
+    driver: local
+  stt_cache:
+    driver: local
+  stt_logs:
+    driver: local
+  tts_cache:
+    driver: local
+  tts_logs:
+    driver: local

@@ -1,24 +1,21 @@
 # Kubernetes Deployment for AI Infrastructure
 
-This directory contains Kubernetes configurations for internal cluster access to AI services running in Docker containers.
+This directory contains Kubernetes configurations for external access to AI services running in Docker containers.
 
 ## 🎯 **Overview**
 
-The AI infrastructure uses **Internal DNS routing** to connect Kubernetes cluster applications to AI endpoints running in Docker containers on the host (192.168.0.21).
+The AI infrastructure uses **External DNS routing** to provide public access to AI endpoints running in Docker containers on the host (192.168.0.20).
 
 ## 📁 **Files Structure**
 
 ```
 k8s/
-├── namespace.yaml           # Kubernetes namespace
-├── services.yaml           # Internal ClusterIP services
-├── endpoints.yaml          # Endpoints pointing to Docker containers
-├── ingress-internal.yaml   # Internal ingress for intranet
-├── configmap.yaml         # Configuration values
-├── networkpolicy.yaml     # Network security policies
-├── dns-config.yaml        # DNS configuration examples
-├── deploy.sh             # Deployment script
-└── README.md             # This file
+├── namespace.yaml                    # Kubernetes namespace
+├── services.yaml                     # Internal ClusterIP services
+├── endpoints.yaml                    # Endpoints pointing to Docker containers
+├── nginx-external-ingress.yaml      # External nginx ingress for public access
+├── letsencrypt-issuer.yaml          # Let's Encrypt SSL certificate issuer
+└── README.md                        # This file
 ```
 
 ## 🚀 **Quick Deployment**
@@ -27,107 +24,77 @@ k8s/
 
 - Kubernetes cluster (v1.19+)
 - kubectl configured
-- Docker containers running AI services on host (192.168.0.21)
-- NGINX Ingress Controller (for internal ingress)
+- Docker containers running AI services on host (192.168.0.20)
+- NGINX Ingress Controller
+- cert-manager for SSL certificates
+- Domain name with DNS control
 
 ### **2. Deploy**
 
 ```bash
-# Make deployment script executable
-chmod +x k8s/deploy.sh
+# Deploy all resources
+kubectl apply -f k8s/
 
-# Run deployment
-./k8s/deploy.sh
-```
-
-### **3. Manual Deployment**
-
-```bash
-# Create namespace
+# Or deploy individually
 kubectl apply -f k8s/namespace.yaml
-
-# Deploy services and endpoints
 kubectl apply -f k8s/services.yaml
 kubectl apply -f k8s/endpoints.yaml
-
-# Deploy internal ingress (optional)
-kubectl apply -f k8s/ingress-internal.yaml
+kubectl apply -f k8s/letsencrypt-issuer.yaml
+kubectl apply -f k8s/nginx-external-ingress.yaml
 ```
 
-## 🌐 **Access Methods**
+## 🌐 **External Access**
 
-### **1. Internal Cluster Access (Primary)**
+### **Public API Endpoints**
 
-**Service Names (within cluster):**
-- Main API: `http://ai-routing-api:8001`
-- STT Service: `http://ai-stt-service:8002`
-- TTS Service: `http://ai-tts-service:8003`
-- vLLM Service: `http://ai-vllm-service:8000`
-- Redis Cache: `redis://ai-redis:6379`
+Your AI services are accessible via HTTPS at `api.askcollections.com`:
 
-### **2. Internal Ingress (Intranet)**
+- **Main API**: `https://api.askcollections.com/api/`
+- **Health Check**: `https://api.askcollections.com/api/health`
+- **AI Routing**: `https://api.askcollections.com/api/route`
+- **Speech-to-Text**: `https://api.askcollections.com/stt/health`
+- **Text-to-Speech**: `https://api.askcollections.com/tts/health`
+- **Direct vLLM**: `https://api.askcollections.com/vllm/v1/models`
 
-**Internal Domains:**
-- Main API: `http://ai-api.internal`
-- STT Service: `http://ai-stt.internal`
-- TTS Service: `http://ai-tts.internal`
-- vLLM Service: `http://ai-vllm.internal`
+### **DNS Configuration**
 
-**Single Internal Domain:**
-- All services: `http://ai.internal/api`, `http://ai.internal/stt`, etc.
+Configure your DNS to point `api.askcollections.com` to the nginx ingress external IPs:
+
+```bash
+# Get nginx ingress external IPs
+kubectl get svc -n ingress-nginx
+```
 
 ## 🔧 **Configuration**
 
 ### **1. Docker Container Setup**
 
-Ensure Docker containers are running on host IP `192.168.0.21`:
+Ensure Docker containers are running on host IP `192.168.0.20`:
 - vLLM Service: Port 8000
 - Routing API: Port 8001  
 - STT Service: Port 8002
 - TTS Service: Port 8003
 - Redis: Port 6379
 
-### **2. Internal DNS (Intranet)**
+### **2. SSL Certificates**
 
-For intranet access, configure your internal DNS server to resolve:
-- `ai-api.internal`
-- `ai-stt.internal`
-- `ai-tts.internal`
-- `ai-vllm.internal`
-- `ai.internal` (single domain)
+SSL certificates are automatically managed by cert-manager using Let's Encrypt.
 
-## 🔒 **Security**
+### **3. CORS and Security**
 
-### **1. Network Policies**
-
-Network policies are deployed to restrict traffic:
-- Only allow ingress from ingress controller
-- Only allow internal service communication
-- Restrict egress to necessary services
-
-### **2. Internal Access Only**
-
-- Services are accessible only within the cluster
-- No external exposure by default
-- Internal ingress provides controlled intranet access
-
-### **3. CORS Configuration**
-
-CORS is configured to allow cross-origin requests:
-- Origins: `*` (configure as needed)
-- Methods: `GET, POST, PUT, DELETE, OPTIONS`
-- Headers: Standard API headers
+The nginx ingress is configured with:
+- CORS enabled for cross-origin requests
+- Rate limiting (1000 requests/minute)
+- Automatic HTTPS redirect
+- Security headers
 
 ## 📊 **Monitoring**
 
 ### **1. Check Deployment Status**
 
 ```bash
-# Check pods
-kubectl get pods -n ai-infrastructure
-
-# Check services
-kubectl get svc -n ai-infrastructure
+# Check all resources
+kubectl get all -n ai-infrastructure
 
 # Check ingress
 kubectl get ingress -n ai-infrastructure
@@ -136,30 +103,16 @@ kubectl get ingress -n ai-infrastructure
 kubectl get certificates -n ai-infrastructure
 ```
 
-### **2. View Logs**
+### **2. Test Endpoints**
 
 ```bash
-# View pod logs
-kubectl logs -f deployment/ai-routing-api -n ai-infrastructure
-kubectl logs -f deployment/ai-stt-service -n ai-infrastructure
-kubectl logs -f deployment/ai-tts-service -n ai-infrastructure
-kubectl logs -f deployment/ai-vllm-service -n ai-infrastructure
-```
+# Test external access
+curl https://api.askcollections.com/api/health
 
-### **3. Test Endpoints**
-
-```bash
-# Test from within cluster
-kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-routing-api:8001/health
-
-# Test main API
-kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-routing-api:8001/health
-
-# Test STT service
-kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-stt-service:8002/health
-
-# Test TTS service
-kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructure -- wget -qO- http://ai-tts-service:8003/health
+# Test AI routing
+curl -X POST https://api.askcollections.com/api/route \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Hello, how are you?", "max_tokens": 50}'
 ```
 
 ## 🛠️ **Troubleshooting**
@@ -171,23 +124,17 @@ kubectl run test-pod --image=busybox --rm -it --restart=Never -n ai-infrastructu
 kubectl get pods -n ingress-nginx
 
 # Check ingress status
-kubectl describe ingress ai-infrastructure-external -n ai-infrastructure
-
-# Check ingress controller logs
-kubectl logs -f deployment/ingress-nginx-controller -n ingress-nginx
+kubectl describe ingress ai-external-ingress -n ai-infrastructure
 ```
 
-### **2. Certificates Not Issued**
+### **2. SSL Certificate Issues**
 
 ```bash
 # Check cert-manager
 kubectl get pods -n cert-manager
 
 # Check certificate status
-kubectl describe certificate ai-infrastructure-tls -n ai-infrastructure
-
-# Check certificate issuer
-kubectl describe clusterissuer letsencrypt-prod
+kubectl describe certificate api-askcollections-com-tls -n ai-infrastructure
 ```
 
 ### **3. Services Not Accessible**
@@ -196,75 +143,12 @@ kubectl describe clusterissuer letsencrypt-prod
 # Check service endpoints
 kubectl get endpoints -n ai-infrastructure
 
-# Check pod readiness
-kubectl get pods -n ai-infrastructure -o wide
-
 # Test internal connectivity
-kubectl exec -it deployment/ai-routing-api -n ai-infrastructure -- curl http://ai-stt-service:8002/health
+kubectl run test-pod --image=curlimages/curl --rm -i --restart=Never -- curl -s http://ai-routing-api.ai-infrastructure.svc.cluster.local:8001/health
 ```
-
-### **4. DNS Resolution Issues**
-
-```bash
-# Test DNS resolution
-nslookup ai.bionicaisolutions.com/api
-dig ai.bionicaisolutions.com/api
-
-# Check CoreDNS
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-kubectl logs -f deployment/coredns -n kube-system
-```
-
-## 🔄 **Updates and Maintenance**
-
-### **1. Update Configuration**
-
-```bash
-# Update ConfigMap
-kubectl apply -f k8s/configmap.yaml
-
-# Restart deployments to pick up changes
-kubectl rollout restart deployment -n ai-infrastructure
-```
-
-### **2. Scale Services**
-
-```bash
-# Scale routing API
-kubectl scale deployment ai-routing-api --replicas=3 -n ai-infrastructure
-
-# Scale STT service
-kubectl scale deployment ai-stt-service --replicas=2 -n ai-infrastructure
-```
-
-### **3. Backup and Restore**
-
-```bash
-# Backup configurations
-kubectl get all -n ai-infrastructure -o yaml > ai-infrastructure-backup.yaml
-
-# Restore from backup
-kubectl apply -f ai-infrastructure-backup.yaml
-```
-
-## 📚 **Additional Resources**
-
-- [Kubernetes Ingress Documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/)
-- [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
-- [cert-manager Documentation](https://cert-manager.io/docs/)
-- [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-
-## 🆘 **Support**
-
-For issues and questions:
-1. Check the troubleshooting section above
-2. Review Kubernetes logs
-3. Verify DNS configuration
-4. Check network connectivity
-5. Ensure all prerequisites are met
 
 ---
 
 **Status**: ✅ **Production Ready**  
-**Last Updated**: September 5, 2025  
-**Version**: 1.0.0
+**Last Updated**: January 2025  
+**Version**: 2.0.0

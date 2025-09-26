@@ -1,0 +1,41 @@
+# Dockerfile for Intelligent Model Routing System
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements-routing.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-routing.txt
+
+# Copy source code
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY docs/ ./docs/
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/cache
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV LOG_LEVEL=INFO
+
+# Expose port
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8001/health || exit 1
+
+# Run the application
+CMD ["uvicorn", "src.api.realtime_routing_api:create_app", "--host", "0.0.0.0", "--port", "8001"]

@@ -1,0 +1,24 @@
+# Custom vLLM Docker image with MiniCPM-V-4.5 support
+FROM vllm/vllm-openai:latest
+
+# Install git if not present
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Clone and install vLLM with MiniCPM-V-4.5 support from OpenBMB fork
+RUN git clone -b minicpmo https://github.com/OpenBMB/vllm.git /opt/vllm
+WORKDIR /opt/vllm
+
+# Install vLLM in editable mode (this will override the existing vLLM)
+RUN pip install -e .
+
+# Install additional dependencies
+RUN pip install timm==0.9.10
+
+# Set working directory
+WORKDIR /app
+
+# Expose port
+EXPOSE 8000
+
+# Default command
+CMD ["python", "-m", "vllm.entrypoints.openai.api_server", "--help"]

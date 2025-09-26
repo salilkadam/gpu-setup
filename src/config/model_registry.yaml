@@ -5,7 +5,7 @@ models:
   # 1. TALKING HEAD AVATARS & LIP SYNC
   avatar:
     primary:
-      model_id: "/app/models/minicpm-v-4"
+      model_id: "/app/models/multimodal/minicpm-v-4"
       backend: "vllm"
       memory_required: "7GB"
       performance_score: 90
@@ -127,7 +127,7 @@ models:
   # 4. CONTENT GENERATION & EXECUTING AGENTS
   agent:
     primary:
-      model_id: "/app/models/minicpm-v-4"
+      model_id: "/app/models/multimodal/minicpm-v-4"
       backend: "vllm"
       memory_required: "7GB"
       performance_score: 95
@@ -173,7 +173,7 @@ models:
   # 5. MULTI-MODAL TEMPORAL AGENTIC RAG
   multimodal:
     primary:
-      model_id: "/app/models/minicpm-v-4"
+      model_id: "/app/models/multimodal/minicpm-v-4"
       backend: "vllm"
       memory_required: "7GB"
       performance_score: 90
@@ -217,7 +217,7 @@ models:
   # 6. VIDEO-TO-TEXT UNDERSTANDING
   video:
     primary:
-      model_id: "/app/models/minicpm-v-4"
+      model_id: "/app/models/multimodal/minicpm-v-4"
       backend: "vllm"
       memory_required: "7GB"
       performance_score: 90
