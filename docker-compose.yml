@@ -114,14 +114,13 @@ services:
       - PYTHONPATH=/app
       - LOG_LEVEL=INFO
       - VLLM_BASE_URL=http://vllm-inference-server:8000
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:fedfina_staging_redis_password_secure@10.43.168.30:6379
     volumes:
       - /opt/ai-models:/opt/ai-models:ro
       - ./src/config:/app/src/config:ro
       - ./logs:/app/logs
     depends_on:
       - vllm-inference-server
-      - redis
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s

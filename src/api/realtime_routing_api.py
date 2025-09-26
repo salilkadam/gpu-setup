@@ -7,6 +7,7 @@ real-time conversations with session-based routing optimization.
 
 import asyncio
 import logging
+import os
 import time
 from typing import Dict, List, Optional, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Header
@@ -81,8 +82,10 @@ class RealtimeRoutingAPI:
     Real-time routing API with smart bypass optimization.
     """
     
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
+    def __init__(self, redis_url: str = None):
         """Initialize the real-time routing API."""
+        if redis_url is None:
+            redis_url = os.getenv("REDIS_URL", "redis://ai-redis:6379")
         self.app = FastAPI(
             title="Real-Time Model Routing API",
             description="Ultra-low latency routing with smart bypass for real-time conversations",
@@ -323,25 +326,27 @@ class RealtimeRoutingAPI:
         try:
             import aiohttp
             
-            # Prepare inference request
+            # Prepare inference request for chat completions API
             inference_data = {
                 "model": routing_result.model_id,
-                "prompt": request.query,
+                "messages": [
+                    {"role": "user", "content": request.query}
+                ],
                 "max_tokens": request.max_tokens,
                 "temperature": request.temperature,
                 "stream": False
             }
             
-            # Make inference request
+            # Make inference request to chat completions endpoint
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{routing_result.endpoint}/v1/completions",
+                    f"{routing_result.endpoint}/v1/chat/completions",
                     json=inference_data,
                     timeout=aiohttp.ClientTimeout(total=30)
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        return result["choices"][0]["text"]
+                        return result["choices"][0]["message"]["content"]
                     else:
                         error_text = await response.text()
                         raise Exception(f"HTTP {response.status}: {error_text}")
@@ -388,7 +393,7 @@ class RealtimeRoutingAPI:
         logger.debug(f"Bypass used for session: {session_id}")
 
 
-def create_app(redis_url: str = "redis://localhost:6379") -> FastAPI:
+def create_app(redis_url: str = None) -> FastAPI:
     """Create and configure the FastAPI application."""
     routing_api = RealtimeRoutingAPI(redis_url)
     return routing_api.app

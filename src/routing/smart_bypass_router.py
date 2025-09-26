@@ -71,13 +71,16 @@ class SmartBypassRouter:
     4. Session timeout: Cleanup and re-route
     """
     
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
+    def __init__(self, redis_url: str = None):
         """
         Initialize the smart bypass router.
         
         Args:
             redis_url: Redis URL for session storage
         """
+        if redis_url is None:
+            import os
+            redis_url = os.getenv("REDIS_URL", "redis://ai-redis:6379")
         self.redis_client = redis.from_url(redis_url, decode_responses=True)
         self.model_endpoints = {
             "agent": {

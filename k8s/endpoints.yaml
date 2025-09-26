@@ -45,15 +45,3 @@ subsets:
   ports:
   - port: 8003
     name: http
----
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: ai-redis
-  namespace: ai-infrastructure
-subsets:
-- addresses:
-  - ip: 192.168.0.20
-  ports:
-  - port: 6379
-    name: redis

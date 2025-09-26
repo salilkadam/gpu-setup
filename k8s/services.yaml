@@ -66,9 +66,9 @@ metadata:
   labels:
     app: ai-redis
 spec:
-  type: ClusterIP
+  type: ExternalName
+  externalName: redis-simple.redis-new.svc.cluster.local
   ports:
   - port: 6379
-    targetPort: 6379
     protocol: TCP
     name: redis
