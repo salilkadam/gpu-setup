@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  wan-downloader:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.wan-download
+    container_name: wan-model-downloader
+    volumes:
+      - /opt/ai-models-extended:/opt/ai-models
+      - ./scripts:/workspace/scripts
+      - ./logs:/workspace/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MODELSCOPE_CACHE=/opt/ai-models/wan
+    working_dir: /workspace
+    command: ["python", "scripts/download_wan_modelscope.py", "--help"]
+    restart: "no"

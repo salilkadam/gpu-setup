@@ -13,7 +13,7 @@ services:
       - VLLM_USE_TRITON_KERNEL=0  # Disable Triton kernels for compatibility
     volumes:
       # Mount centralized model storage
-      - /opt/ai-models/models:/app/models:ro
+      - /opt/ai-models-extended/models:/app/models:ro
       - vllm_cache:/app/cache
       - vllm_logs:/app/logs
     command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/multimodal/minicpm-v-4", "--trust-remote-code"]
@@ -116,7 +116,7 @@ services:
       - VLLM_BASE_URL=http://vllm-inference-server:8000
       - REDIS_URL=redis://:fedfina_staging_redis_password_secure@10.43.168.30:6379
     volumes:
-      - /opt/ai-models:/opt/ai-models:ro
+      - /opt/ai-models-extended:/opt/ai-models:ro
       - ./src/config:/app/src/config:ro
       - ./logs:/app/logs
     depends_on:
@@ -141,7 +141,7 @@ services:
       - CUDA_VISIBLE_DEVICES=""
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     volumes:
-      - /opt/ai-models/models:/opt/ai-models/models:ro
+      - /opt/ai-models-extended/models:/opt/ai-models/models:ro
       - stt_cache:/app/cache
       - stt_logs:/app/logs
     command: ["python", "-m", "uvicorn", "src.audio.stt_service:app", "--host", "0.0.0.0", "--port", "8002"]
@@ -172,7 +172,7 @@ services:
       - CUDA_VISIBLE_DEVICES=""
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     volumes:
-      - /opt/ai-models/models:/opt/ai-models/models:ro
+      - /opt/ai-models-extended/models:/opt/ai-models/models:ro
       - tts_cache:/app/cache
       - tts_logs:/app/logs
     command: ["python", "-m", "uvicorn", "src.audio.tts_service:app", "--host", "0.0.0.0", "--port", "8003"]
@@ -207,7 +207,7 @@ services:
       - MODELS_DIR=/opt/ai-models
     volumes:
       # Mount centralized model storage as read-write for downloading
-      - /opt/ai-models:/opt/ai-models:rw
+      - /opt/ai-models-extended:/opt/ai-models:rw
       - wan_cache:/app/cache
       - wan_logs:/app/logs
       - wan_output:/app/output
@@ -245,7 +245,7 @@ services:
       - WAN_URL=http://wan-service:8004
     volumes:
       # Mount centralized model storage
-      - /opt/ai-models:/opt/ai-models:ro
+      - /opt/ai-models-extended:/opt/ai-models:ro
       - ./test-results:/app/test-results
       - ./scripts:/app/scripts:ro
     working_dir: /app

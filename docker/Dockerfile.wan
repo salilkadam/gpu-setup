@@ -1,5 +1,5 @@
 # Dockerfile for Wan Video Generation Service
-FROM nvcr.io/nvidia/pytorch:24.12-py3
+FROM nvcr.io/nvidia/cuda:13.0.1-devel-ubuntu24.04
 
 # Set working directory
 WORKDIR /app
@@ -17,32 +17,35 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libgl1-mesa-dev \
     libgomp1 \
+    python3 \
+    python3-pip \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 
-# Python symlink already exists in NGC PyTorch container
-
-# Skip pip upgrade - system pip is already recent enough
+# Install PyTorch with CUDA 13.0 support
+RUN pip3 install --no-cache-dir --break-system-packages torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # Copy Wan2.2 source code
 COPY Wan2.2/ ./Wan2.2/
 
-# PyTorch is already installed in the base image
-
-# Install Wan requirements (skip flash_attn and SAM-2 for now)
+# Install Wan requirements
 RUN cd Wan2.2 && \
-    pip install --no-cache-dir "opencv-python>=4.9.0.80" "diffusers>=0.31.0" "transformers<=4.51.3,>=4.49.0" "tokenizers>=0.20.3" "accelerate>=1.1.1" tqdm easydict ftfy dashscope imageio-ffmpeg imageio && \
-    pip install --no-cache-dir decord peft onnxruntime pandas matplotlib loguru sentencepiece && \
-    pip install --no-cache-dir -r requirements_s2v.txt
+    pip3 install --no-cache-dir --break-system-packages "opencv-python>=4.9.0.80" "diffusers>=0.31.0" "transformers<=4.51.3,>=4.49.0" "tokenizers>=0.20.3" "accelerate>=1.1.1" tqdm easydict ftfy dashscope imageio-ffmpeg imageio && \
+    pip3 install --no-cache-dir --break-system-packages decord peft onnxruntime pandas matplotlib loguru sentencepiece && \
+    pip3 install --no-cache-dir --break-system-packages -r requirements_s2v.txt
 
 # Try to install flash_attn from pre-built wheel
-RUN pip install --no-cache-dir flash-attn --no-build-isolation || echo "flash_attn installation failed, continuing without it"
+RUN pip3 install --no-cache-dir --break-system-packages flash-attn --no-build-isolation || echo "flash_attn installation failed, continuing without it"
 
 # Install additional dependencies for API service
-RUN pip install --no-cache-dir \
+RUN pip3 install --no-cache-dir --break-system-packages \
     fastapi==0.104.1 \
     uvicorn[standard]==0.24.0 \
     python-multipart==0.0.6 \
@@ -66,4 +69,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8004/health || exit 1
 
 # Run the application
-CMD ["uvicorn", "src.video.wan_service:app", "--host", "0.0.0.0", "--port", "8004"]
+CMD ["python3", "-m", "uvicorn", "src.video.wan_service:app", "--host", "0.0.0.0", "--port", "8004"]

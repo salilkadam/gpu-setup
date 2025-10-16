@@ -1,0 +1,28 @@
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /workspace
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    modelscope \
+    requests \
+    tqdm \
+    huggingface-hub
+
+# Create download directory
+RUN mkdir -p /opt/ai-models/wan
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV MODELSCOPE_CACHE=/opt/ai-models/wan
+
+# Default command
+CMD ["python", "/workspace/scripts/download_wan_modelscope.py", "--help"]

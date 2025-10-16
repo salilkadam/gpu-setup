@@ -13,6 +13,9 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 
+# Add Wan2.2 to Python path
+sys.path.append('/app/Wan2.2')
+
 import torch
 import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
@@ -82,6 +85,23 @@ MODELS_DIR = os.getenv("MODELS_DIR", "/opt/ai-models")
 OUTPUT_DIR = "/app/output"
 CACHE_DIR = "/app/cache"
 
+# Model directory mapping
+MODEL_DIR_MAPPING = {
+    "t2v-A14B": "Wan2.2-T2V-A14B",
+    "i2v-A14B": "Wan2.2-I2V-A14B", 
+    "ti2v-5B": "Wan2.2-TI2V-5B",
+    "animate-14B": "Wan2.2-Animate-14B",
+    "s2v-14B": "Wan2.2-S2V-14B"  # This might not exist yet
+}
+
+def get_model_path(task):
+    """Get the correct model path for a given task"""
+    if task in MODEL_DIR_MAPPING:
+        return os.path.join(MODELS_DIR, "models", MODEL_DIR_MAPPING[task])
+    else:
+        # Fallback to old path structure
+        return os.path.join(MODELS_DIR, "wan", task)
+
 # Ensure directories exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -131,7 +151,7 @@ async def get_model(task: str):
                 raise HTTPException(status_code=400, detail=f"Unsupported task: {task}")
             
             cfg = WAN_CONFIGS[task]
-            ckpt_dir = os.path.join(MODELS_DIR, "wan", task)
+            ckpt_dir = get_model_path(task)
             
             if not os.path.exists(ckpt_dir):
                 raise HTTPException(
@@ -222,7 +242,7 @@ async def list_available_models():
     import_wan_modules()
     available_models = {}
     for task, config in WAN_CONFIGS.items():
-        ckpt_dir = os.path.join(MODELS_DIR, "wan", task)
+        ckpt_dir = get_model_path(task)
         available_models[task] = {
             "config": {
                 "sample_steps": config.sample_steps,
@@ -293,8 +313,11 @@ async def generate_text_to_video(request: VideoGenerationRequest):
         )
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Error generating text-to-video: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")
+        logger.error(f"Full traceback: {error_details}")
+        raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e) if str(e) else 'Unknown error'}")
 
 @app.post("/generate/image-to-video", response_model=VideoGenerationResponse)
 async def generate_image_to_video(request: ImageToVideoRequest):
