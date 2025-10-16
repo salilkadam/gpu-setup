@@ -1,0 +1,452 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-ai-direct
+  namespace: mcp
+  labels:
+    app: mcp-ai-direct
+    security: enabled
+    version: v3.1.0
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mcp-ai-direct
+  template:
+    metadata:
+      labels:
+        app: mcp-ai-direct
+        security: enabled
+        version: v3.1.0
+    spec:
+      containers:
+      - name: mcp-ai-direct
+        image: node:18-alpine
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          # Create working directory and install dependencies
+          mkdir -p /app
+          cd /app
+          apk add --no-cache curl
+          npm init -y
+          npm install express cors axios helmet express-rate-limit express-validator
+          
+          # Create the direct MCP server script with wan-service support
+          cat > /app/server.js << 'EOF'
+          const express = require('express');
+          const cors = require('cors');
+          const axios = require('axios');
+          const helmet = require('helmet');
+          const rateLimit = require('express-rate-limit');
+          const { body, validationResult } = require('express-validator');
+          
+          const app = express();
+          const port = process.env.PORT || 3000;
+          const host = process.env.HOST || '0.0.0.0';
+          
+          // Direct AI Service URLs
+          const AI_ROUTING_API_URL = process.env.AI_ROUTING_API_URL;
+          const AI_VLLM_SERVICE_URL = process.env.AI_VLLM_SERVICE_URL;
+          const AI_STT_SERVICE_URL = process.env.AI_STT_SERVICE_URL;
+          const AI_TTS_SERVICE_URL = process.env.AI_TTS_SERVICE_URL;
+          const AI_WAN_SERVICE_URL = process.env.AI_WAN_SERVICE_URL;
+          
+          // Security Configuration
+          const AUTH_ENABLED = process.env.AUTH_ENABLED === 'true';
+          const REQUIRE_API_KEY = process.env.REQUIRE_API_KEY === 'true';
+          const RATE_LIMIT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW) || 3600;
+          const RATE_LIMIT_BURST = parseInt(process.env.RATE_LIMIT_BURST) || 100;
+          const RATE_LIMIT_REQUESTS = parseInt(process.env.RATE_LIMIT_REQUESTS) || 1000;
+          const MAX_REQUEST_SIZE = parseInt(process.env.MAX_REQUEST_SIZE) || 10485760;
+          const REQUEST_TIMEOUT = parseInt(process.env.REQUEST_TIMEOUT) || 300000;
+          const LOG_REQUESTS = process.env.LOG_REQUESTS === 'true';
+          const LOG_AUTH_FAILURES = process.env.LOG_AUTH_FAILURES === 'true';
+          const LOG_RATE_LIMITS = process.env.LOG_RATE_LIMITS === 'true';
+          
+          // API Keys
+          const API_KEYS = {
+            'admin-key-1234567890': { role: 'admin', rateLimit: 10000 },
+            'user-key-abcdefghijk': { role: 'user', rateLimit: 1000 },
+            'readonly-key-xyzqwer': { role: 'readonly', rateLimit: 500 }
+          };
+          
+          // Rate limiting store
+          const rateLimitStore = new Map();
+          
+          // Security middleware
+          app.use(helmet({
+            contentSecurityPolicy: {
+              directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'none'"],
+              },
+            },
+            hsts: {
+              maxAge: 31536000,
+              includeSubDomains: true,
+              preload: true
+            }
+          }));
+          
+          // CORS configuration
+          app.use(cors({
+            origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['*'],
+            methods: process.env.CORS_METHODS || 'GET,POST,PUT,DELETE,OPTIONS',
+            allowedHeaders: process.env.CORS_HEADERS || 'Content-Type,Authorization,X-API-Key',
+            credentials: true
+          }));
+          
+          // Body parsing with size limits
+          app.use(express.json({ limit: MAX_REQUEST_SIZE }));
+          app.use(express.urlencoded({ extended: true, limit: MAX_REQUEST_SIZE }));
+          
+          // Request logging middleware
+          if (LOG_REQUESTS) {
+            app.use((req, res, next) => {
+              const timestamp = new Date().toISOString();
+              const clientIP = req.ip || req.connection.remoteAddress;
+              const userAgent = req.get('User-Agent') || 'Unknown';
+              console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${clientIP} - UA: ${userAgent}`);
+              next();
+            });
+          }
+          
+          // API Key validation middleware
+          const validateApiKey = (req, res, next) => {
+            if (!AUTH_ENABLED || !REQUIRE_API_KEY) {
+              return next();
+            }
+            
+            const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+            
+            if (!apiKey) {
+              if (LOG_AUTH_FAILURES) {
+                console.log(`[AUTH FAIL] Missing API key from IP: ${req.ip}`);
+              }
+              return res.status(401).json({ 
+                error: 'Authentication required',
+                message: 'API key is required in X-API-Key header or Authorization header'
+              });
+            }
+            
+            const keyInfo = API_KEYS[apiKey];
+            if (!keyInfo) {
+              if (LOG_AUTH_FAILURES) {
+                console.log(`[AUTH FAIL] Invalid API key: ${apiKey} from IP: ${req.ip}`);
+              }
+              return res.status(401).json({ 
+                error: 'Authentication failed',
+                message: 'Invalid API key'
+              });
+            }
+            
+            // Check rate limits
+            const clientId = req.ip + ':' + apiKey;
+            const now = Date.now();
+            const windowStart = now - (RATE_LIMIT_WINDOW * 1000);
+            
+            if (!rateLimitStore.has(clientId)) {
+              rateLimitStore.set(clientId, []);
+            }
+            
+            const requests = rateLimitStore.get(clientId);
+            const recentRequests = requests.filter(time => time > windowStart);
+            
+            if (recentRequests.length >= keyInfo.rateLimit) {
+              if (LOG_RATE_LIMITS) {
+                console.log(`[RATE LIMIT] Exceeded for API key: ${apiKey} from IP: ${req.ip}`);
+              }
+              return res.status(429).json({ 
+                error: 'Rate limit exceeded',
+                message: `Maximum ${keyInfo.rateLimit} requests per ${RATE_LIMIT_WINDOW} seconds`,
+                retryAfter: RATE_LIMIT_WINDOW
+              });
+            }
+            
+            recentRequests.push(now);
+            rateLimitStore.set(clientId, recentRequests);
+            
+            // Add user info to request
+            req.user = { apiKey, role: keyInfo.role, rateLimit: keyInfo.rateLimit };
+            next();
+          };
+          
+          // Apply API key validation to all routes except health check
+          app.use((req, res, next) => {
+            if (req.path === '/health' || req.path === '/') {
+              return next();
+            }
+            validateApiKey(req, res, next);
+          });
+          
+          // Health check endpoint (no auth required)
+          app.get('/health', (req, res) => {
+            res.json({ 
+              status: 'healthy', 
+              timestamp: new Date().toISOString(),
+              version: '3.1.0',
+              connection: 'direct',
+              security: {
+                auth_enabled: AUTH_ENABLED,
+                require_api_key: REQUIRE_API_KEY,
+                rate_limiting: true
+              },
+              services: {
+                routing_api: AI_ROUTING_API_URL,
+                vllm: AI_VLLM_SERVICE_URL,
+                stt: AI_STT_SERVICE_URL,
+                tts: AI_TTS_SERVICE_URL,
+                wan: AI_WAN_SERVICE_URL
+              }
+            });
+          });
+          
+          // Root endpoint (no auth required)
+          app.get('/', (req, res) => {
+            res.json({
+              name: 'MCP AI Server - Direct Connection',
+              version: '3.1.0',
+              description: 'Secure Model Context Protocol server with direct AI service connections',
+              connection: 'direct',
+              security: {
+                authentication: 'API Key required',
+                rate_limiting: 'Enabled',
+                cors: 'Configured',
+                tls: 'Required'
+              },
+              endpoints: {
+                health: '/health',
+                routing_api: '/api/routing/*',
+                vllm: '/api/vllm/*',
+                stt: '/api/stt/*',
+                tts: '/api/tts/*',
+                wan: '/api/wan/*'
+              },
+              usage: {
+                authentication: 'Include X-API-Key header or Authorization: Bearer <key>',
+                rate_limits: '1000 requests per hour (varies by API key)',
+                cors: 'Configured for specific origins'
+              }
+            });
+          });
+          
+          // Direct AI Routing API proxy
+          app.use('/api/routing', async (req, res) => {
+            try {
+              const targetUrl = AI_ROUTING_API_URL + req.path;
+              console.log(`[DIRECT] Routing API: ${req.method} ${targetUrl}`);
+              const response = await axios({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                headers: { ...req.headers, host: undefined },
+                timeout: REQUEST_TIMEOUT
+              });
+              res.status(response.status).json(response.data);
+            } catch (error) {
+              console.error('Direct Routing API Error:', error.message);
+              res.status(error.response?.status || 500).json({
+                error: 'Direct Routing API Error',
+                message: error.message
+              });
+            }
+          });
+          
+          // Direct VLLM Service proxy
+          app.use('/api/vllm', async (req, res) => {
+            try {
+              const targetUrl = AI_VLLM_SERVICE_URL + req.path;
+              console.log(`[DIRECT] VLLM Service: ${req.method} ${targetUrl}`);
+              const response = await axios({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                headers: { ...req.headers, host: undefined },
+                timeout: REQUEST_TIMEOUT
+              });
+              res.status(response.status).json(response.data);
+            } catch (error) {
+              console.error('Direct VLLM Service Error:', error.message);
+              res.status(error.response?.status || 500).json({
+                error: 'Direct VLLM Service Error',
+                message: error.message
+              });
+            }
+          });
+          
+          // Direct STT Service proxy
+          app.use('/api/stt', async (req, res) => {
+            try {
+              const targetUrl = AI_STT_SERVICE_URL + req.path;
+              console.log(`[DIRECT] STT Service: ${req.method} ${targetUrl}`);
+              const response = await axios({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                headers: { ...req.headers, host: undefined },
+                timeout: REQUEST_TIMEOUT
+              });
+              res.status(response.status).json(response.data);
+            } catch (error) {
+              console.error('Direct STT Service Error:', error.message);
+              res.status(error.response?.status || 500).json({
+                error: 'Direct STT Service Error',
+                message: error.message
+              });
+            }
+          });
+          
+          // Direct TTS Service proxy
+          app.use('/api/tts', async (req, res) => {
+            try {
+              const targetUrl = AI_TTS_SERVICE_URL + req.path;
+              console.log(`[DIRECT] TTS Service: ${req.method} ${targetUrl}`);
+              const response = await axios({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                headers: { ...req.headers, host: undefined },
+                timeout: REQUEST_TIMEOUT
+              });
+              res.status(response.status).json(response.data);
+            } catch (error) {
+              console.error('Direct TTS Service Error:', error.message);
+              res.status(error.response?.status || 500).json({
+                error: 'Direct TTS Service Error',
+                message: error.message
+              });
+            }
+          });
+          
+          // Direct WAN Service proxy
+          app.use('/api/wan', async (req, res) => {
+            try {
+              const targetUrl = AI_WAN_SERVICE_URL + req.path;
+              console.log(`[DIRECT] WAN Service: ${req.method} ${targetUrl}`);
+              const response = await axios({
+                method: req.method,
+                url: targetUrl,
+                data: req.body,
+                headers: { ...req.headers, host: undefined },
+                timeout: REQUEST_TIMEOUT
+              });
+              res.status(response.status).json(response.data);
+            } catch (error) {
+              console.error('Direct WAN Service Error:', error.message);
+              res.status(error.response?.status || 500).json({
+                error: 'Direct WAN Service Error',
+                message: error.message
+              });
+            }
+          });
+          
+          // Error handling middleware
+          app.use((err, req, res, next) => {
+            console.error('Unhandled error:', err);
+            res.status(500).json({
+              error: 'Internal server error',
+              message: 'An unexpected error occurred'
+            });
+          });
+          
+          // 404 handler
+          app.use((req, res) => {
+            res.status(404).json({
+              error: 'Not found',
+              message: `Endpoint ${req.method} ${req.path} not found`
+            });
+          });
+          
+          app.listen(port, host, () => {
+            console.log(`Direct MCP AI Server running on ${host}:${port}`);
+            console.log(`Direct connections to AI services:`);
+            console.log(`  - Routing API: ${AI_ROUTING_API_URL}`);
+            console.log(`  - VLLM: ${AI_VLLM_SERVICE_URL}`);
+            console.log(`  - STT: ${AI_STT_SERVICE_URL}`);
+            console.log(`  - TTS: ${AI_TTS_SERVICE_URL}`);
+            console.log(`  - WAN: ${AI_WAN_SERVICE_URL}`);
+            console.log(`Security features: Auth=${AUTH_ENABLED}, API Key=${REQUIRE_API_KEY}, Rate Limiting=true`);
+          });
+          EOF
+          
+          # Start the direct server
+          node /app/server.js
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: PORT
+          value: "3000"
+        - name: HOST
+          value: 0.0.0.0
+        - name: AI_ROUTING_API_URL
+          value: http://192.168.0.20:8001
+        - name: AI_VLLM_SERVICE_URL
+          value: http://192.168.0.20:8000
+        - name: AI_STT_SERVICE_URL
+          value: http://192.168.0.20:8002
+        - name: AI_TTS_SERVICE_URL
+          value: http://192.168.0.20:8003
+        - name: AI_WAN_SERVICE_URL
+          value: http://192.168.0.20:8004
+        - name: AUTH_ENABLED
+          value: "true"
+        - name: REQUIRE_API_KEY
+          value: "true"
+        - name: RATE_LIMIT_WINDOW
+          value: "3600"
+        - name: RATE_LIMIT_BURST
+          value: "100"
+        - name: RATE_LIMIT_REQUESTS
+          value: "1000"
+        - name: MAX_REQUEST_SIZE
+          value: "10485760"
+        - name: REQUEST_TIMEOUT
+          value: "300000"
+        - name: LOG_REQUESTS
+          value: "true"
+        - name: LOG_AUTH_FAILURES
+          value: "true"
+        - name: LOG_RATE_LIMITS
+          value: "true"
+        - name: CORS_ORIGINS
+          value: https://yourdomain.com,https://app.yourdomain.com
+        - name: CORS_METHODS
+          value: GET,POST,PUT,DELETE,OPTIONS
+        - name: CORS_HEADERS
+          value: Content-Type,Authorization,X-API-Key
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
