@@ -23,6 +23,7 @@ class UseCase(Enum):
     AGENT = "agent"
     MULTIMODAL = "multimodal"
     VIDEO = "video"
+    VIDEO_GENERATION = "video_generation"
 
 
 @dataclass
@@ -80,7 +81,15 @@ class QueryClassifier:
             UseCase.VIDEO: [
                 "video", "temporal", "sequence", "motion", "movement",
                 "frame", "clip", "movie", "animation", "video analysis",
-                "video understanding", "video generation", "timeline"
+                "video understanding", "timeline"
+            ],
+            UseCase.VIDEO_GENERATION: [
+                "generate video", "create video", "text to video", "image to video",
+                "speech to video", "video generation", "animate", "animation",
+                "video creation", "make video", "produce video", "video synthesis",
+                "lip sync video", "talking head video", "character animation",
+                "motion transfer", "pose driven", "video from text", "video from image",
+                "video from audio", "video from speech", "animate image", "bring to life"
             ]
         }
     

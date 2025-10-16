@@ -257,6 +257,79 @@ models:
       load_time: "1.5s"
       inference_speed: "good"
 
+  # 7. VIDEO GENERATION (Wan Models)
+  video_generation:
+    primary:
+      model_id: "t2v-A14B"
+      backend: "wan"
+      memory_required: "28GB"
+      performance_score: 95
+      capabilities:
+        - "text_to_video"
+        - "video_generation"
+        - "high_quality"
+        - "long_videos"
+      supported_languages: ["english", "chinese"]
+      load_time: "15.0s"
+      inference_speed: "good"
+    
+    fallback:
+      model_id: "ti2v-5B"
+      backend: "wan"
+      memory_required: "10GB"
+      performance_score: 85
+      capabilities:
+        - "text_to_video"
+        - "image_to_video"
+        - "video_generation"
+        - "faster_inference"
+      supported_languages: ["english", "chinese"]
+      load_time: "8.0s"
+      inference_speed: "excellent"
+    
+    image_to_video:
+      model_id: "i2v-A14B"
+      backend: "wan"
+      memory_required: "28GB"
+      performance_score: 92
+      capabilities:
+        - "image_to_video"
+        - "video_generation"
+        - "high_quality"
+        - "image_animation"
+      supported_languages: ["english", "chinese"]
+      load_time: "15.0s"
+      inference_speed: "good"
+    
+    speech_to_video:
+      model_id: "s2v-14B"
+      backend: "wan"
+      memory_required: "28GB"
+      performance_score: 90
+      capabilities:
+        - "speech_to_video"
+        - "video_generation"
+        - "audio_sync"
+        - "lip_sync"
+        - "tts_integration"
+      supported_languages: ["english", "chinese"]
+      load_time: "15.0s"
+      inference_speed: "good"
+    
+    animation:
+      model_id: "animate-14B"
+      backend: "wan"
+      memory_required: "28GB"
+      performance_score: 88
+      capabilities:
+        - "animation_generation"
+        - "character_animation"
+        - "pose_driven"
+        - "motion_transfer"
+      supported_languages: ["english", "chinese"]
+      load_time: "15.0s"
+      inference_speed: "good"
+
 # Backend configurations
 backends:
   vllm:
@@ -273,6 +346,16 @@ backends:
     torch_dtype: "float16"
     max_memory: "20GB"
     supported_formats: ["text", "audio", "image"]
+    
+  wan:
+    type: "wan"
+    base_url: "http://wan-service:8004"
+    timeout: 300
+    max_retries: 2
+    health_check_interval: 30
+    supported_formats: ["text", "image", "audio", "video"]
+    max_concurrent_requests: 2
+    gpu_memory_required: "28GB"
     
   custom:
     type: "custom"

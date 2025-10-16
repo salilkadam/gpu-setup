@@ -1,0 +1,82 @@
+# Dockerfile for Wan Video Generation Service
+FROM nvidia/cuda:12.1-devel-ubuntu22.04
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    wget \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libglib2.0-0 \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=all
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+# Install Python 3.11
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3.11-distutils \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
+
+# Upgrade pip
+RUN python -m pip install --upgrade pip
+
+# Copy Wan2.2 source code
+COPY Wan2.2/ ./Wan2.2/
+
+# Install Wan requirements
+RUN cd Wan2.2 && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements_animate.txt && \
+    pip install --no-cache-dir -r requirements_s2v.txt
+
+# Install additional dependencies for API service
+RUN pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    python-multipart==0.0.6 \
+    aiofiles==23.2.1 \
+    pillow==10.1.0 \
+    numpy==1.24.3 \
+    opencv-python==4.8.1.78
+
+# Copy API service code
+COPY src/video/ ./src/video/
+COPY src/api/ ./src/api/
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/cache /app/output /app/models
+
+# Set permissions
+RUN chmod -R 755 /app
+
+# Expose port
+EXPOSE 8004
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8004/health || exit 1
+
+# Run the application
+CMD ["uvicorn", "src.video.wan_service:app", "--host", "0.0.0.0", "--port", "8004"]

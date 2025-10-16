@@ -24,6 +24,7 @@ class BackendType(Enum):
     """Enumeration of supported backends."""
     VLLM = "vllm"
     TRANSFORMERS = "transformers"
+    WAN = "wan"
     CUSTOM = "custom"
 
 
@@ -292,7 +293,8 @@ class ModelRouter:
             UseCase.TTS: ['audio_processing', 'text_to_speech', 'multilingual'],
             UseCase.AGENT: ['text_generation', 'code_generation', 'reasoning'],
             UseCase.MULTIMODAL: ['multimodal', 'vision', 'text_generation', 'rag'],
-            UseCase.VIDEO: ['multimodal', 'video_understanding', 'temporal_analysis']
+            UseCase.VIDEO: ['multimodal', 'video_understanding', 'temporal_analysis'],
+            UseCase.VIDEO_GENERATION: ['video_generation', 'text_to_video', 'image_to_video', 'speech_to_video', 'animation']
         }
         
         return capabilities_map.get(classification.use_case, ['text_generation'])
