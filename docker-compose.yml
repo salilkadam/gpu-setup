@@ -205,8 +205,9 @@ services:
       # Mount centralized model storage
       - /opt/ai-models:/opt/ai-models:ro
       - ./test-results:/app/test-results
+      - ./scripts:/app/scripts:ro
     working_dir: /app
-    command: ["python", "-c", "print('vLLM testing service ready')"]
+    command: ["python", "-c", "import time; print('vLLM testing service ready'); time.sleep(3600)"]
     depends_on:
       - vllm-inference-server
       - routing-api
