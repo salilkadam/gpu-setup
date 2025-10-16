@@ -24,9 +24,34 @@ import aiofiles
 # Add Wan2.2 to Python path
 sys.path.append('/app/Wan2.2')
 
-import wan
-from wan.configs import WAN_CONFIGS, SIZE_CONFIGS, MAX_AREA_CONFIGS, SUPPORTED_SIZES
-from wan.utils.utils import save_video, merge_video_audio
+# Import Wan modules only when needed to avoid CUDA initialization at startup
+wan = None
+WAN_CONFIGS = None
+SIZE_CONFIGS = None
+MAX_AREA_CONFIGS = None
+SUPPORTED_SIZES = None
+save_video = None
+merge_video_audio = None
+
+def import_wan_modules():
+    """Import Wan modules when needed"""
+    global wan, WAN_CONFIGS, SIZE_CONFIGS, MAX_AREA_CONFIGS, SUPPORTED_SIZES, save_video, merge_video_audio
+    if wan is None:
+        try:
+            import wan
+            from wan.configs import WAN_CONFIGS, SIZE_CONFIGS, MAX_AREA_CONFIGS, SUPPORTED_SIZES
+            from wan.utils.utils import save_video, merge_video_audio
+        except RuntimeError as e:
+            if "No CUDA GPUs are available" in str(e):
+                raise HTTPException(
+                    status_code=503, 
+                    detail="CUDA GPUs are not available. Please ensure GPU access is properly configured."
+                )
+            else:
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Failed to import Wan modules: {str(e)}"
+                )
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -97,12 +122,13 @@ class VideoGenerationResponse(BaseModel):
 
 async def get_model(task: str):
     """Get or load the appropriate Wan model for the task"""
+    import_wan_modules()
     async with model_lock:
         if task not in wan_models:
             logger.info(f"Loading model for task: {task}")
             
             if task not in WAN_CONFIGS:
-                raise HTTPException(status_code=400, f"Unsupported task: {task}")
+                raise HTTPException(status_code=400, detail=f"Unsupported task: {task}")
             
             cfg = WAN_CONFIGS[task]
             ckpt_dir = os.path.join(MODELS_DIR, "wan", task)
@@ -110,7 +136,7 @@ async def get_model(task: str):
             if not os.path.exists(ckpt_dir):
                 raise HTTPException(
                     status_code=404, 
-                    f"Model checkpoint not found at {ckpt_dir}. Please download the model first."
+                    detail=f"Model checkpoint not found at {ckpt_dir}. Please download the model first."
                 )
             
             try:
@@ -181,7 +207,7 @@ async def get_model(task: str):
                 
             except Exception as e:
                 logger.error(f"Failed to load model for task {task}: {str(e)}")
-                raise HTTPException(status_code=500, f"Failed to load model: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to load model: {str(e)}")
         
         return wan_models[task]
 
@@ -193,6 +219,7 @@ async def health_check():
 @app.get("/models")
 async def list_available_models():
     """List available Wan models and their configurations"""
+    import_wan_modules()
     available_models = {}
     for task, config in WAN_CONFIGS.items():
         ckpt_dir = os.path.join(MODELS_DIR, "wan", task)
@@ -211,13 +238,14 @@ async def list_available_models():
 @app.post("/generate/text-to-video", response_model=VideoGenerationResponse)
 async def generate_text_to_video(request: VideoGenerationRequest):
     """Generate video from text prompt"""
+    import_wan_modules()
     start_time = datetime.now()
     task_id = str(uuid.uuid4())
     
     try:
         # Validate task
         if not request.task.startswith("t2v"):
-            raise HTTPException(status_code=400, "Task must be a text-to-video task")
+            raise HTTPException(status_code=400, detail="Task must be a text-to-video task")
         
         # Get model
         model = await get_model(request.task)
@@ -266,22 +294,23 @@ async def generate_text_to_video(request: VideoGenerationRequest):
         
     except Exception as e:
         logger.error(f"Error generating text-to-video: {str(e)}")
-        raise HTTPException(status_code=500, f"Video generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")
 
 @app.post("/generate/image-to-video", response_model=VideoGenerationResponse)
 async def generate_image_to_video(request: ImageToVideoRequest):
     """Generate video from image and text prompt"""
+    import_wan_modules()
     start_time = datetime.now()
     task_id = str(uuid.uuid4())
     
     try:
         # Validate task
         if not request.task.startswith("i2v"):
-            raise HTTPException(status_code=400, "Task must be an image-to-video task")
+            raise HTTPException(status_code=400, detail="Task must be an image-to-video task")
         
         # Check if image exists
         if not os.path.exists(request.image_path):
-            raise HTTPException(status_code=404, f"Image not found: {request.image_path}")
+            raise HTTPException(status_code=404, detail=f"Image not found: {request.image_path}")
         
         # Get model
         model = await get_model(request.task)
@@ -335,22 +364,23 @@ async def generate_image_to_video(request: ImageToVideoRequest):
         
     except Exception as e:
         logger.error(f"Error generating image-to-video: {str(e)}")
-        raise HTTPException(status_code=500, f"Video generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")
 
 @app.post("/generate/speech-to-video", response_model=VideoGenerationResponse)
 async def generate_speech_to_video(request: SpeechToVideoRequest):
     """Generate video from speech/audio and reference image"""
+    import_wan_modules()
     start_time = datetime.now()
     task_id = str(uuid.uuid4())
     
     try:
         # Validate task
         if not request.task.startswith("s2v"):
-            raise HTTPException(status_code=400, "Task must be a speech-to-video task")
+            raise HTTPException(status_code=400, detail="Task must be a speech-to-video task")
         
         # Check if image exists
         if not os.path.exists(request.image_path):
-            raise HTTPException(status_code=404, f"Image not found: {request.image_path}")
+            raise HTTPException(status_code=404, detail=f"Image not found: {request.image_path}")
         
         # Get model
         model = await get_model(request.task)
@@ -416,22 +446,23 @@ async def generate_speech_to_video(request: SpeechToVideoRequest):
         
     except Exception as e:
         logger.error(f"Error generating speech-to-video: {str(e)}")
-        raise HTTPException(status_code=500, f"Video generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")
 
 @app.post("/generate/animation", response_model=VideoGenerationResponse)
 async def generate_animation(request: AnimationRequest):
     """Generate animation from source path"""
+    import_wan_modules()
     start_time = datetime.now()
     task_id = str(uuid.uuid4())
     
     try:
         # Validate task
         if not request.task.startswith("animate"):
-            raise HTTPException(status_code=400, "Task must be an animation task")
+            raise HTTPException(status_code=400, detail="Task must be an animation task")
         
         # Check if source path exists
         if not os.path.exists(request.src_root_path):
-            raise HTTPException(status_code=404, f"Source path not found: {request.src_root_path}")
+            raise HTTPException(status_code=404, detail=f"Source path not found: {request.src_root_path}")
         
         # Get model
         model = await get_model(request.task)
@@ -481,14 +512,14 @@ async def generate_animation(request: AnimationRequest):
         
     except Exception as e:
         logger.error(f"Error generating animation: {str(e)}")
-        raise HTTPException(status_code=500, f"Animation generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Animation generation failed: {str(e)}")
 
 @app.get("/videos/{filename}")
 async def get_video(filename: str):
     """Download generated video"""
     video_path = os.path.join(OUTPUT_DIR, filename)
     if not os.path.exists(video_path):
-        raise HTTPException(status_code=404, "Video not found")
+        raise HTTPException(status_code=404, detail="Video not found")
     
     return FileResponse(
         video_path,
@@ -518,7 +549,7 @@ async def delete_video(filename: str):
     """Delete a generated video"""
     video_path = os.path.join(OUTPUT_DIR, filename)
     if not os.path.exists(video_path):
-        raise HTTPException(status_code=404, "Video not found")
+        raise HTTPException(status_code=404, detail="Video not found")
     
     os.remove(video_path)
     return {"message": f"Video {filename} deleted successfully"}

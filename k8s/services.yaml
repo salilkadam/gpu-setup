@@ -61,6 +61,21 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: ai-wan-service
+  namespace: ai-infrastructure
+  labels:
+    app: ai-wan-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8004
+    targetPort: 8004
+    protocol: TCP
+    name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: ai-redis
   namespace: ai-infrastructure
   labels:

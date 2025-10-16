@@ -55,6 +55,7 @@ Your AI services are accessible via HTTPS at `api.askcollections.com`:
 - **Speech-to-Text**: `https://api.askcollections.com/stt/health`
 - **Text-to-Speech**: `https://api.askcollections.com/tts/health`
 - **Direct vLLM**: `https://api.askcollections.com/vllm/v1/models`
+- **Wan Video Generation**: `https://api.askcollections.com/wan/health`
 
 ### **DNS Configuration**
 

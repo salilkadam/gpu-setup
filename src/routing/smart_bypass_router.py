@@ -99,9 +99,14 @@ class SmartBypassRouter:
                 "port": 8000
             },
             "video": {
-                "endpoint": "http://192.168.0.20:8000",  # Shared with multimodal
-                "model_id": "/app/models/multimodal/minicpm-v-4", 
-                "port": 8000
+                "endpoint": "http://192.168.0.20:8004",  # Wan video generation service
+                "model_id": "wan-ti2v-5b", 
+                "port": 8004
+            },
+            "video_generation": {
+                "endpoint": "http://192.168.0.20:8004",  # Wan video generation service
+                "model_id": "wan-ti2v-5b", 
+                "port": 8004
             },
             "stt": {
                 "endpoint": "http://192.168.0.20:8002",
@@ -122,7 +127,8 @@ class SmartBypassRouter:
             "tts": ["speech", "voice", "speak", "tts", "synthesize", "narrate", "read"],
             "agent": ["code", "write", "generate", "analyze", "function", "script", "program"],
             "multimodal": ["image", "picture", "visual", "see", "look", "describe", "caption"],
-            "video": ["video", "movie", "clip", "frame", "motion", "temporal", "sequence"]
+            "video": ["video", "movie", "clip", "frame", "motion", "temporal", "sequence"],
+            "video_generation": ["generate video", "create video", "video generation", "text to video", "image to video", "animate", "video from", "make video"]
         }
         
         # Session configuration
@@ -316,6 +322,9 @@ class SmartBypassRouter:
             elif modality == "video":
                 modality_boost["video"] = 0.3
                 modality_boost["multimodal"] = 0.2
+            elif modality == "video_generation":
+                modality_boost["video_generation"] = 0.5
+                modality_boost["video"] = 0.2
         
         # Score each use case
         scores = {}
@@ -324,7 +333,11 @@ class SmartBypassRouter:
             
             for pattern in patterns:
                 if pattern in normalized_query:
-                    score += 1.0
+                    # Give higher weight to more specific patterns
+                    if len(pattern) > 5:  # Longer patterns are more specific
+                        score += 1.5
+                    else:
+                        score += 1.0
             
             if patterns:
                 score = score / len(patterns)

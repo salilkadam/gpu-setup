@@ -45,3 +45,15 @@ subsets:
   ports:
   - port: 8003
     name: http
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: ai-wan-service
+  namespace: ai-infrastructure
+subsets:
+- addresses:
+  - ip: 192.168.0.20
+  ports:
+  - port: 8004
+    name: http

@@ -47,6 +47,14 @@ spec:
             name: ai-vllm-service
             port:
               number: 8000
+      # Wan Video Generation Service
+      - path: /wan
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-wan-service
+            port:
+              number: 8004
       # Health check endpoint
       - path: /health
         pathType: Prefix

@@ -206,8 +206,8 @@ services:
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
       - MODELS_DIR=/opt/ai-models
     volumes:
-      # Mount centralized model storage
-      - /opt/ai-models:/opt/ai-models:ro
+      # Mount centralized model storage as read-write for downloading
+      - /opt/ai-models:/opt/ai-models:rw
       - wan_cache:/app/cache
       - wan_logs:/app/logs
       - wan_output:/app/output
@@ -218,6 +218,12 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    # Add GPU and memory settings for CUDA initialization
+    runtime: nvidia
+    ipc: host
+    ulimits:
+      memlock: -1
+      stack: 67108864
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
       interval: 30s

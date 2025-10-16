@@ -67,9 +67,14 @@ class RealtimeRouter:
                 "port": 8000
             },
             UseCase.VIDEO: {
-                "endpoint": "http://192.168.0.20:8000",  # Shared with multimodal
-                "model_id": "/app/models/multimodal/minicpm-v-4", 
-                "port": 8000
+                "endpoint": "http://192.168.0.20:8004",  # Wan video generation service
+                "model_id": "wan-ti2v-5b", 
+                "port": 8004
+            },
+            UseCase.VIDEO_GENERATION: {
+                "endpoint": "http://192.168.0.20:8004",  # Wan video generation service
+                "model_id": "wan-ti2v-5b", 
+                "port": 8004
             },
             UseCase.STT: {
                 "endpoint": "http://192.168.0.20:8002",
