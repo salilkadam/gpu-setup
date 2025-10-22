@@ -1,0 +1,268 @@
+services:
+  # vLLM Inference Server (Using Community Image - Working with Blackwell GPUs)
+  vllm-inference-server:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-inference-server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"  # OpenAI-compatible API
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+      - VLLM_USE_TRITON_KERNEL=0  # Disable Triton kernels for compatibility
+    volumes:
+      # External volume mounts - NOT stored in Docker
+      - /opt/external-volumes/models:/app/models:ro
+      - /opt/external-volumes/cache/vllm:/app/cache
+      - /opt/external-volumes/logs/vllm:/app/logs
+    command: ["--host", "0.0.0.0", "--port", "8000", "--model", "/app/models/multimodal/minicpm-v-4", "--trust-remote-code"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: ai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - /opt/external-volumes/logs/nginx:/var/log/nginx
+    depends_on:
+      - vllm-inference-server
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - /opt/external-volumes/data/redis:/data
+      - /opt/external-volumes/logs/redis:/var/log/redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /opt/external-volumes/data/prometheus:/prometheus
+      - /opt/external-volumes/logs/prometheus:/var/log/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - /opt/external-volumes/data/grafana:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - /opt/external-volumes/logs/grafana:/var/log/grafana
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Intelligent Model Routing System
+  routing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.routing
+    container_name: ai-routing-api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"  # Routing API port
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+      - VLLM_BASE_URL=http://vllm-inference-server:8000
+      - REDIS_URL=redis://:fedfina_staging_redis_password_secure@10.43.168.30:6379
+    volumes:
+      - /opt/external-volumes/models:/opt/ai-models:ro
+      - ./src/config:/app/src/config:ro
+      - /opt/external-volumes/logs/routing:/app/logs
+    depends_on:
+      - vllm-inference-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # STT Service (Speech-to-Text)
+  stt-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.audio
+    container_name: ai-stt-service
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - /opt/external-volumes/models:/opt/ai-models/models:ro
+      - /opt/external-volumes/cache/stt:/app/cache
+      - /opt/external-volumes/logs/stt:/app/logs
+    command: ["python", "-m", "uvicorn", "src.audio.stt_service:app", "--host", "0.0.0.0", "--port", "8002"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # TTS Service (Text-to-Speech)
+  tts-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.audio
+    container_name: ai-tts-service
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - /opt/external-volumes/models:/opt/ai-models/models:ro
+      - /opt/external-volumes/cache/tts:/app/cache
+      - /opt/external-volumes/logs/tts:/app/logs
+    command: ["python", "-m", "uvicorn", "src.audio.tts_service:app", "--host", "0.0.0.0", "--port", "8003"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Wan Video Generation Service
+  wan-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.wan
+    container_name: ai-wan-service
+    restart: unless-stopped
+    ports:
+      - "8004:8004"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - MODELS_DIR=/opt/ai-models
+    volumes:
+      # External volume mounts - NOT stored in Docker
+      - /opt/external-volumes/models:/opt/ai-models:rw
+      - /opt/external-volumes/cache/wan:/app/cache
+      - /opt/external-volumes/logs/wan:/app/logs
+      - /opt/external-volumes/data/wan:/app/output
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # Add GPU and memory settings for CUDA initialization
+    runtime: nvidia
+    ipc: host
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+
+  # Python Testing Service (Updated for vLLM)
+  python-testing:
+    image: python:3.10-slim
+    container_name: ai-python-testing
+    restart: unless-stopped
+    environment:
+      - MODELS_DIR=/opt/ai-models
+      - VLLM_URL=http://vllm-inference-server:8000
+      - ROUTING_URL=http://routing-api:8001
+      - STT_URL=http://stt-service:8002
+      - TTS_URL=http://tts-service:8003
+      - WAN_URL=http://wan-service:8004
+    volumes:
+      # External volume mounts - NOT stored in Docker
+      - /opt/external-volumes/models:/opt/ai-models:ro
+      - ./test-results:/app/test-results
+      - ./scripts:/app/scripts:ro
+      - /opt/external-volumes/logs/testing:/app/logs
+    working_dir: /app
+    command: ["python", "-c", "import time; print('vLLM testing service ready'); time.sleep(3600)"]
+    depends_on:
+      - vllm-inference-server
+      - routing-api
+      - stt-service
+      - tts-service
+      - wan-service
+
+# Note: No volumes section - all volumes are external mounts
+# This prevents Docker from consuming ephemeral storage
+
+

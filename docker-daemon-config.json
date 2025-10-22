@@ -1,0 +1,36 @@
+{
+  "storage-driver": "overlay2",
+  "storage-opts": [
+    "overlay2.override_kernel_check=true"
+  ],
+  "data-root": "/opt/docker-data",
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",
+    "max-file": "3"
+  },
+  "live-restore": true,
+  "userland-proxy": false,
+  "experimental": false,
+  "metrics-addr": "127.0.0.1:9323",
+  "default-address-pools": [
+    {
+      "base": "172.17.0.0/12",
+      "size": 16
+    }
+  ],
+  "default-ulimits": {
+    "memlock": {
+      "Hard": -1,
+      "Name": "memlock",
+      "Soft": -1
+    }
+  },
+  "shutdown-timeout": 15,
+  "max-concurrent-downloads": 6,
+  "max-concurrent-uploads": 5,
+  "default-shm-size": "2g"
+}
+
+
